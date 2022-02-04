@@ -40,16 +40,16 @@
 		}
 
 		public override bool Equals([NotNullWhen(true)] object? obj) {
-			if (ReferenceEquals(null, obj)) {
+			if (obj is null) {
 				return false;
 			}
 
-			return obj is FullName && Equals((FullName)obj);
+			return obj is FullName name && Equals(name);
 		}
 
 		public override int GetHashCode() {
 			unchecked {
-				return ((Value != null ? Value.GetHashCode() : 0) * 397);
+				return (Value != null ? Value.GetHashCode() : 0) * 397;
 			}
 		}
 

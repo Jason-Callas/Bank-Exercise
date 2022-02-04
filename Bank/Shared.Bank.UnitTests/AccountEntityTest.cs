@@ -4,6 +4,7 @@
 	using System.Threading.Tasks;
 	using FluentAssertions;
 	using global::Bank.Shared.Domain.Entities;
+	using global::Bank.Shared.Domain.ValueObjects;
 	using Xunit;
 
 	public class AccountEntityTest {
@@ -48,6 +49,69 @@
 			act.Should()
 				.ThrowAsync<ArgumentOutOfRangeException>();
 		}
+
+		[Fact()]
+		[Trait("Class", nameof(Account))]
+		[Trait("Method", nameof(Account.CreateAsync))]
+		public async Task When_AccountOverdraftLimitIsChangedToPositiveValue_Expect_ChangeToBeAccepted() {
+			// ** Arrange
+
+			var account = await Account.CreateAsync(System.Guid.Empty, "Joe Dirt");
+
+			var newLimit = new Money(300m, "USD");
+
+			// ** Act
+
+			Func<Task> act = async () => await account.SetOverdraftLimit(newLimit);
+
+			// ** Assert
+
+			// Not really needed as a check but does show explicit "no exception thrown" result
+			await act.Should()
+				.NotThrowAsync();
+		}
+
+		[Fact()]
+		[Trait("Class", nameof(Account))]
+		[Trait("Method", nameof(Account.CreateAsync))]
+		public async Task When_AccountOverdraftLimitIsChangedToZero_Expect_ChangeToBeAccepted() {
+			// ** Arrange
+
+			var account = await Account.CreateAsync(System.Guid.Empty, "Joe Dirt");
+
+			var newLimit = new Money(0m, "USD");
+
+			// ** Act
+
+			Func<Task> act = async () => await account.SetOverdraftLimit(newLimit);
+
+			// ** Assert
+
+			// Not really needed as a check but does show explicit "no exception thrown" result
+			await act.Should()
+				.NotThrowAsync();
+		}
+
+		[Fact()]
+		[Trait("Class", nameof(Account))]
+		[Trait("Method", nameof(Account.CreateAsync))]
+		public async Task When_AccountOverdraftLimitIsChangedToNegativeValue_Expect_ExceptionToBeThrown() {
+			// ** Arrange
+
+			var account = await Account.CreateAsync(System.Guid.Empty, "Joe Dirt");
+
+			var newLimit = new Money(-250m, "USD");        // negative value not allowed
+
+			// ** Act
+
+			Func<Task> act = async () => await account.SetOverdraftLimit(newLimit);
+
+			// ** Assert
+
+			await act.Should()
+				.ThrowAsync<ArgumentOutOfRangeException>();
+		}
+
 
 	}
 
