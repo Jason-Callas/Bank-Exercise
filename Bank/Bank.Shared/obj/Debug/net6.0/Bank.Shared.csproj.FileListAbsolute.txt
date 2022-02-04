@@ -1,0 +1,12 @@
+C:\Users\jcallas\source\repos\Banking\Bank\Bank.Shared\bin\Debug\net6.0\Bank.Shared.deps.json
+C:\Users\jcallas\source\repos\Banking\Bank\Bank.Shared\bin\Debug\net6.0\Bank.Shared.dll
+C:\Users\jcallas\source\repos\Banking\Bank\Bank.Shared\bin\Debug\net6.0\ref\Bank.Shared.dll
+C:\Users\jcallas\source\repos\Banking\Bank\Bank.Shared\bin\Debug\net6.0\Bank.Shared.pdb
+C:\Users\jcallas\source\repos\Banking\Bank\Bank.Shared\obj\Debug\net6.0\Bank.Shared.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\jcallas\source\repos\Banking\Bank\Bank.Shared\obj\Debug\net6.0\Bank.Shared.AssemblyInfoInputs.cache
+C:\Users\jcallas\source\repos\Banking\Bank\Bank.Shared\obj\Debug\net6.0\Bank.Shared.AssemblyInfo.cs
+C:\Users\jcallas\source\repos\Banking\Bank\Bank.Shared\obj\Debug\net6.0\Bank.Shared.csproj.CoreCompileInputs.cache
+C:\Users\jcallas\source\repos\Banking\Bank\Bank.Shared\obj\Debug\net6.0\Bank.Shared.dll
+C:\Users\jcallas\source\repos\Banking\Bank\Bank.Shared\obj\Debug\net6.0\ref\Bank.Shared.dll
+C:\Users\jcallas\source\repos\Banking\Bank\Bank.Shared\obj\Debug\net6.0\Bank.Shared.pdb
+C:\Users\jcallas\source\repos\Banking\Bank\Bank.Shared\obj\Debug\net6.0\Bank.Shared.csproj.AssemblyReference.cache
