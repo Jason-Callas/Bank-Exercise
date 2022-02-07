@@ -19,20 +19,6 @@
 		}
 
 		public Account(Guid id, string name) {
-			// This is not really an issue in the ctor since any exception here will result in
-			// a null object reference being returned to the caller (i.e. new Account(blah, blah) will fail)
-			// depending on just the value objects doing validation can result in an invalid Entity.
-			//
-			// Consider the following scenario
-			//
-			//   * Request comes in to update two properties
-			//   * Instance of Account is created from store or cache
-			//   * Method is called that performs update where each Value Object does its own validation
-			//            this.SomeProperty = new SomeValueObject(value1);          this works...
-			//            this.SomeProperty2 = new SomeOtherValueObject(value2);    this throws exception...
-			//     The entity instance is now potentially in an invalid state since SomeProperty was updated but SomeProperty2 was not.
-
-			// So now I have to duplicate the validation rules...hope I got the length check correct... easy mistake to make...
 			if (string.IsNullOrWhiteSpace(name)) {
 				throw new ArgumentNullException(nameof(name));
 			}
@@ -42,7 +28,7 @@
 			}
 
 			Id = id;
-			CustomerName = new FullName(name);
+			CustomerName = name;
 		}
 
 		public async Task SetOverdraftLimit(Money limit) {
@@ -69,7 +55,7 @@
 
 		public Guid Id { get; protected set; }
 
-		public FullName CustomerName { get; protected set; }
+		public string CustomerName { get; protected set; }
 
 		public Money OverdraftLimit { get; protected set; }
 
