@@ -1,21 +1,12 @@
-﻿using Bank.Shared.Domain.Entities;
+﻿namespace Bank.Shared.Events {
 
-namespace Bank.Shared.Events {
+	using Bank.Shared.Domain.Entities;
 
 	public class AccountCreated :
-		IEvent {
+		AccountBaseEvent {
 
-		public AccountCreated(Account account) {
-			if (account is null) {
-				throw new ArgumentNullException(nameof(account));
-			}
-
-			Account = account;
+		public AccountCreated(Account account, DateTime? timestamp = null) : base(account, timestamp) {
 		}
-
-		public Account Account { get; set; }
-
-		public DateTime Timestamp { get; set; } = DateTime.UtcNow;
 
 	}
 
