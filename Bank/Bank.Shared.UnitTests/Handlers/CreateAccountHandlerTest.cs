@@ -19,7 +19,7 @@
 		public void When_NullCommandIsPassedToHandler_Expect_ExceptionToBeThrown() {
 			// ** Arrange
 
-			var mockRepository = new Mock<IRepository<Account>>();
+			var mockRepository = new Mock<IAccountRepository>();
 
 			var handler = new CreateAccountHandler(mockRepository.Object);
 
@@ -36,14 +36,14 @@
 		[Fact()]
 		[Trait("Class", nameof(CreateAccountHandler))]
 		[Trait("Method", nameof(CreateAccountHandler.Handle))]
-		public void When_ValidCommandIsPassedToHandler_Expect_AccountToBeCreated() {
+		public async Task When_ValidCommandIsPassedToHandler_Expect_AccountToBeCreated() {
 			// ** Arrange
 
 			var command = new CreateAccount() {
 				Name = "Joe Dirt"
 			};
 
-			var mockRepository = new Mock<IRepository<Account>>();
+			var mockRepository = new Mock<IAccountRepository>();
 
 			var createWasCalled = false;
 			mockRepository.Setup(x => x.CreateAsync(It.IsAny<Account>()))
@@ -53,12 +53,9 @@
 
 			// ** Act
 
-			Func<Task> act = async () => await handler.Handle(command, new CancellationToken());
+			await handler.Handle(command, new CancellationToken());
 
 			// ** Assert
-
-			act.Should()
-				.NotThrowAsync();
 
 			createWasCalled.Should()
 				.BeTrue();

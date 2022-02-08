@@ -1,10 +1,15 @@
-﻿namespace Bank.Shared.Repositories {
+﻿using Bank.Shared.Domain.Entities;
+
+namespace Bank.Shared.Repositories {
 
 	// An argument could be made for creating a specific interface for read-only queries but
 	// for this exercise it may not be needed.
-	public interface IRepository<T> {
+	public interface IRepository<TEntity, TId>
+		where TEntity : IAggregateRoot {
 
-		Task<T> CreateAsync(T entity);
+		Task<TEntity> CreateAsync(TEntity entity);
+
+		Task<TEntity> GetByIdAsync(TId id);
 
 	}
 

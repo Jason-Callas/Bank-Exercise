@@ -9,9 +9,9 @@
 	public class CreateAccountHandler :
 		ICommandHandler<CreateAccount> {
 
-		private readonly IRepository<Account> _accountRepo;
+		private readonly IAccountRepository _accountRepo;
 
-		public CreateAccountHandler(IRepository<Account> accountRepo) {
+		public CreateAccountHandler(IAccountRepository accountRepo) {
 			_accountRepo = Guard.Against.Null(accountRepo);
 		}
 
