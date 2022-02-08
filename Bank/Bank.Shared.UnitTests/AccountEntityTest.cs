@@ -1,10 +1,10 @@
-﻿namespace Shared.Bank.UnitTests {
+﻿namespace Bank.Shared.UnitTests {
 
 	using System;
 	using System.Threading.Tasks;
 	using FluentAssertions;
-	using global::Bank.Shared.Domain.Entities;
-	using global::Bank.Shared.Domain.ValueObjects;
+	using Bank.Shared.Domain.Entities;
+	using Bank.Shared.Domain.ValueObjects;
 	using Xunit;
 
 	public class AccountEntityTest {

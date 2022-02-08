@@ -5,7 +5,7 @@ VisualStudioVersion = 17.0.32112.339
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Bank.Shared", "Bank.Shared\Bank.Shared.csproj", "{F98C116E-DB51-43A4-949F-CD4DB8FF217D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shared.Bank.UnitTests", "Shared.Bank.UnitTests\Shared.Bank.UnitTests.csproj", "{BC9FDE75-94AC-437C-B4FD-D6C69C7A9A17}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Bank.Shared.UnitTests", "Bank.Shared.UnitTests\Bank.Shared.UnitTests.csproj", "{BC9FDE75-94AC-437C-B4FD-D6C69C7A9A17}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
