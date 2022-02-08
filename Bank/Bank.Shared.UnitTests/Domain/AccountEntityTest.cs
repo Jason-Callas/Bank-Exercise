@@ -1,4 +1,4 @@
-﻿namespace Bank.Shared.UnitTests {
+﻿namespace Bank.Shared.Domain.UnitTests {
 
 	using System;
 	using System.Threading.Tasks;
