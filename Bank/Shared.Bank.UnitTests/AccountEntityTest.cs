@@ -109,7 +109,7 @@
 			// ** Assert
 
 			await act.Should()
-				.ThrowAsync<ArgumentOutOfRangeException>();
+				.ThrowAsync<ArgumentException>();
 		}
 
 

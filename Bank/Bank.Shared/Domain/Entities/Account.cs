@@ -1,5 +1,5 @@
 ﻿namespace Bank.Shared.Domain.Entities {
-
+	using Ardalis.GuardClauses;
 	using Bank.Shared.Domain.ValueObjects;
 	using Bank.Shared.Events;
 
@@ -19,9 +19,13 @@
 		}
 
 		public Account(Guid id, string name) {
-			if (string.IsNullOrWhiteSpace(name)) {
-				throw new ArgumentNullException(nameof(name));
-			}
+			// Need to research this more. Some "guard" libraries support checking string length but others (this one for example, put length check in
+			// the realm of validation which _seems_ to NOT be the same as "guard" checks...
+
+			// At this time, I am unsure if I should extend it (as mentioned https://github.com/ardalis/GuardClauses/issues/69), or use a different library,
+			// or leave the explicit "validation" check.
+
+			Guard.Against.NullOrWhiteSpace(name, nameof(name));
 
 			if (name.Length > 30) {
 				throw new ArgumentOutOfRangeException(nameof(name), "The length of the value must be 30 characters or less.");
@@ -29,14 +33,18 @@
 
 			Id = id;
 			CustomerName = name;
+
+			// The USD currency value should probably be injected instead of hard-coded... maybe even use a constant (for now)
+			OverdraftLimit = new Money(0m, "USD");
+			DailyWireTransferLimit = new Money(0m, "USD");
 		}
 
 		public async Task SetOverdraftLimit(Money limit) {
-			if (limit.Amount < 0) {
-				throw new ArgumentOutOfRangeException(nameof(limit.Amount), "Value must be equal to or greater than 0.");
-			}
-
 			// Need to check if we can change limit if the current balance will violate the limit. In other words, is the previous limit honored.
+			// Should be create custom guard to cover Money value object ???
+			// I also wonder if Negative check should throw ArgumentOutOfRangeException as opposed to ArgumentException
+
+			Guard.Against.Negative(limit.Amount, nameof(limit));
 
 			OverdraftLimit = limit;
 

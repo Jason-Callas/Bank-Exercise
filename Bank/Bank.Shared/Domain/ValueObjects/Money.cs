@@ -1,43 +1,24 @@
 ﻿namespace Bank.Shared.Domain.ValueObjects {
 
-	using System.Diagnostics.CodeAnalysis;
+	using Ardalis.GuardClauses;
 
-	public struct Money :
-		IEquatable<Money> {
-
-		public static bool operator ==(Money left, Money right) {
-			return left.Equals(right);
-		}
-
-		public static bool operator !=(Money left, Money right) {
-			return !(left == right);
-		}
+	public class Money :
+		ValueObject {
 
 		public Money(decimal amount, string currency) {
 			// Unsure if blank currency should be allowed..._Probably_ not...
 			Amount = amount;
-			Currency = currency;
+			Currency = Guard.Against.NullOrWhiteSpace(currency, nameof(currency));
 		}
 
-		public bool Equals(Money other) {
-			return Amount == other.Amount && Currency == other.Currency;
+		protected override IEnumerable<object> GetEqualityComponents() {
+			yield return Amount;
+			yield return Currency.ToUpper();
 		}
 
-		public override bool Equals([NotNullWhen(true)] object? obj) {
-			if (obj is null) {
-				return false;
-			}
+		public decimal Amount { get; protected set; }
 
-			return obj is Money money && Equals(money);
-		}
-
-		public override int GetHashCode() {
-			return HashCode.Combine(Amount, Currency);
-		}
-
-		public decimal Amount { get; }
-
-		public string Currency { get; }
+		public string? Currency { get; protected set; }
 
 	}
 
