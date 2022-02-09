@@ -30,11 +30,11 @@
 
 			// ** Act
 
-			var actual = new Account(_dataFixture.DefaultAccountId, _dataFixture.DefaultCustomerName);
+			var account = new Account(_dataFixture.DefaultAccountId, _dataFixture.DefaultCustomerName);
 
 			// ** Assert
 
-			actual.UncommittedEvents.Should()
+			account.UncommittedEvents.Should()
 				.BeEquivalentTo(expectedEvents, options =>
 					options
 						.Excluding(x => x.Id)
@@ -130,6 +130,85 @@
 			// ** Act
 
 			Action act = () => account.SetOverdraftLimit(newLimit);
+
+			// ** Assert
+
+			act.Should()
+				.Throw<ArgumentException>();
+		}
+
+		[Fact()]
+		[Trait("Class", nameof(Account))]
+		[Trait("Method", nameof(Account.SetOverdraftLimit))]
+		public void When_AccountDailyWireTransferLimitIsChangedToValidValue_Expect_CommandToBeCompleted() {
+			// ** Arrange
+
+			var account = new Account(_dataFixture.DefaultAccountId, _dataFixture.DefaultCustomerName);
+			account.ClearUncommittedEvents();
+
+			var newLimit = new Money(300m, _dataFixture.DefaultCurrency);
+
+			var expectedEvents = new IEvent<Guid>[] {
+				new AccountDailyWireTransferLimitChanged(_dataFixture.DefaultAccountId, newLimit)
+			};
+
+			// ** Act
+
+			account.SetDailyWireTransferLimit(newLimit);
+
+			// ** Assert
+
+			account.UncommittedEvents.Should()
+				.BeEquivalentTo(expectedEvents, options =>
+					options
+						.Excluding(x => x.Id)
+						.Excluding(x => x.TimestampUtc)
+				);
+		}
+
+		[Fact()]
+		[Trait("Class", nameof(Account))]
+		[Trait("Method", nameof(Account.SetOverdraftLimit))]
+		public void When_AccountDailyWireTransferLimitIsChangedToZero_Expect_CommandToBeCompleted() {
+			// ** Arrange
+
+			var account = new Account(_dataFixture.DefaultAccountId, _dataFixture.DefaultCustomerName);
+			account.ClearUncommittedEvents();
+
+			var newLimit = new Money(0m, _dataFixture.DefaultCurrency);
+
+			var expectedEvents = new IEvent<Guid>[] {
+				new AccountDailyWireTransferLimitChanged(_dataFixture.DefaultAccountId, newLimit)
+			};
+
+			// ** Act
+
+			account.SetDailyWireTransferLimit(newLimit);
+
+			// ** Assert
+
+			account.UncommittedEvents.Should()
+				.BeEquivalentTo(expectedEvents, options =>
+					options
+						.Excluding(x => x.Id)
+						.Excluding(x => x.TimestampUtc)
+				);
+		}
+
+		[Fact()]
+		[Trait("Class", nameof(Account))]
+		[Trait("Method", nameof(Account.SetOverdraftLimit))]
+		public void When_AccountDailyWireTransferLimitIsChangedToNegativeValue_Expect_ExceptionToBeThrown() {
+			// ** Arrange
+
+			var account = new Account(_dataFixture.DefaultAccountId, _dataFixture.DefaultCustomerName);
+			account.ClearUncommittedEvents();
+
+			var newLimit = new Money(-250m, _dataFixture.DefaultCurrency);        // negative value not allowed
+
+			// ** Act
+
+			Action act = () => account.SetDailyWireTransferLimit(newLimit);
 
 			// ** Assert
 
