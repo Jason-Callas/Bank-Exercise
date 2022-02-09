@@ -11,6 +11,8 @@ namespace Bank.Shared.Repositories {
 
 		Task<TEntity> GetByIdAsync(TId id);
 
+		Task<TEntity> UpdateAsync(TEntity entity);
+
 	}
 
 }

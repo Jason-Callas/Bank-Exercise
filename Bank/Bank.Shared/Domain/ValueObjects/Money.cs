@@ -18,7 +18,7 @@
 
 		public decimal Amount { get; protected set; }
 
-		public string? Currency { get; protected set; }
+		public string Currency { get; protected set; }
 
 	}
 

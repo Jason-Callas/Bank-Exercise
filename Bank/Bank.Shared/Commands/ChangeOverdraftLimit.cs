@@ -1,6 +1,7 @@
 ﻿namespace Bank.Shared.Commands {
 
-	public class ChangeOverdraftLimit {
+	public class ChangeOverdraftLimit :
+		ICommand {
 
 		public Guid Id { get; set; }
 
