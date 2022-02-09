@@ -1,12 +1,16 @@
 ﻿namespace Bank.Shared.Events {
 
-	using Bank.Shared.Domain.Entities;
+	using Ardalis.GuardClauses;
+	using Bank.Shared.Domain.ValueObjects;
 
 	public class AccountDailyWireTransferLimitChanged :
-		AccountBaseEvent {
+		EventBase<Guid> {
 
-		public AccountDailyWireTransferLimitChanged(Account account, DateTime? timestamp = null) : base(account, timestamp) {
+		public AccountDailyWireTransferLimitChanged(Guid aggregateId, Money newLimit) : base(aggregateId) {
+			Limit = Guard.Against.Null(newLimit);
 		}
+
+		public Money Limit { get; protected set; }
 
 	}
 

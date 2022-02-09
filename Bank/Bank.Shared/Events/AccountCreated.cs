@@ -1,12 +1,15 @@
 ﻿namespace Bank.Shared.Events {
 
-	using Bank.Shared.Domain.Entities;
+	using Ardalis.GuardClauses;
 
 	public class AccountCreated :
-		AccountBaseEvent {
+		EventBase<Guid> {
 
-		public AccountCreated(Account account, DateTime? timestamp = null) : base(account, timestamp) {
+		public AccountCreated(Guid aggregateId, string customerName) : base(aggregateId) {
+			CustomerName = Guard.Against.NullOrWhiteSpace(customerName, nameof(customerName));
 		}
+
+		public string CustomerName { get; protected set; }
 
 	}
 

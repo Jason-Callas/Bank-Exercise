@@ -26,7 +26,7 @@
 				throw new AccountNotExistException(request.Id, "Unable to set overdraft limit on account that does not exist.");
 			}
 
-			await existingAccount.SetOverdraftLimit(new Money(request.Amount, request.Currency));
+			existingAccount.SetOverdraftLimit(new Money(request.Amount, request.Currency));
 
 			await _accountRepo.UpdateAsync(existingAccount);
 

@@ -14,6 +14,8 @@
 	using Moq;
 	using Xunit;
 
+	[Trait("Type", "Unit")]
+	[Trait("Category", "Handler")]
 	public class ChangeOverdraftLimitHandlerTest :
 		IClassFixture<AccountDataFixture> {
 

@@ -18,7 +18,7 @@
 		public async Task<Unit> Handle(CreateAccount request, CancellationToken cancellationToken) {
 			Guard.Against.Null(request);
 
-			var newAccount = await Account.CreateAsync(request.Id, request.Name);
+			var newAccount = new Account(request.Id, request.Name);
 
 			// The use of Repository pattern may change after Event Source work is done. However, it is possible that
 			// Repo will still stay in play with the implementation hiding the use of events.

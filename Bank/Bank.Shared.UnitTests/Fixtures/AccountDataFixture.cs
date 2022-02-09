@@ -5,8 +5,14 @@
 
 	public class AccountDataFixture {
 
+		public Guid DefaultAccountId { get => Guid.Empty; }
+
+		public string DefaultCustomerName { get => "Joe Dirt"; }
+
+		public string DefaultCurrency { get => "GBP"; }
+
 		private Account CreateNewAccountWithNoTransactions(Guid? id) {
-			return new Account(id ?? Guid.NewGuid(), "Joe Dirt");
+			return new Account(id ?? DefaultAccountId, DefaultCustomerName);
 		}
 
 		public Account GetNewAccount(Guid? id = null) {

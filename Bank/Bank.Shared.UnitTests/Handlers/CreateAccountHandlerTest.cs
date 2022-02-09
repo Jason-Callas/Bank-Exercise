@@ -11,6 +11,8 @@
 	using Moq;
 	using Xunit;
 
+	[Trait("Type", "Unit")]
+	[Trait("Category", "Handler")]
 	public class CreateAccountHandlerTest {
 
 		[Fact()]
