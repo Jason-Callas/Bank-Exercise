@@ -7,13 +7,21 @@
 	using Bank.Shared.Domain.Entities;
 	using Bank.Shared.Handlers;
 	using Bank.Shared.Repositories;
+	using Bank.Shared.UnitTests.Fixtures;
 	using FluentAssertions;
 	using Moq;
 	using Xunit;
 
 	[Trait("Type", "Unit")]
 	[Trait("Category", "Handler")]
-	public class CreateAccountHandlerTest {
+	public class CreateAccountHandlerTest :
+		IClassFixture<AccountDataFixture> {
+
+		private readonly AccountDataFixture _dataFixture;
+
+		public CreateAccountHandlerTest(AccountDataFixture dataFixture) {
+			_dataFixture = dataFixture ?? throw new ArgumentNullException(nameof(dataFixture));
+		}
 
 		[Fact()]
 		[Trait("Class", nameof(CreateAccountHandler))]
@@ -42,7 +50,8 @@
 			// ** Arrange
 
 			var command = new CreateAccount() {
-				Name = "Joe Dirt"
+				Name = "Joe Dirt",
+				Currency = _dataFixture.DefaultCurrency
 			};
 
 			var mockRepository = new Mock<IAccountRepository>();

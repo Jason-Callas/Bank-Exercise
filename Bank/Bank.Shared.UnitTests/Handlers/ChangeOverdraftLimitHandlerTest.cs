@@ -98,12 +98,12 @@
 		[Fact()]
 		[Trait("Class", nameof(ChangeOverdraftLimitHandler))]
 		[Trait("Method", nameof(ChangeOverdraftLimitHandler.Handle))]
-		public void When_CommandWithIdThatExistsIsPassedToHandler_Expect_AccountToBeUpdated() {
+		public async Task When_CommandWithIdThatExistsIsPassedToHandler_Expect_AccountToBeUpdated() {
 			// ** Arrange
 
 			var expectedAccount = _dataFixture.GetNewAccount();
 
-			var expectedLimit = new Money(325m, "USD");
+			var expectedLimit = new Money(325m, _dataFixture.DefaultCurrency);
 
 			var command = new ChangeOverdraftLimit() {
 				Id = Guid.NewGuid(),
@@ -124,11 +124,11 @@
 
 			// ** Act
 
-			Func<Task> act = () => handler.Handle(command, new CancellationToken());
+			Func<Task> act = async () => { await handler.Handle(command, new CancellationToken()); };
 
 			// ** Assert
 
-			act.Should()
+			await act.Should()
 				.NotThrowAsync();
 
 			updateWasCalled.Should()

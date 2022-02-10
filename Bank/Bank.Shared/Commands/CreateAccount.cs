@@ -13,6 +13,8 @@
 		// Should Overdraft and Dail Wire Limit values be set during creation? We definitely need
 		// methods that allow them to be changed which could also be used for setting "initial" values.
 
+		public string Currency { get; set; }
+
 	}
 
 }

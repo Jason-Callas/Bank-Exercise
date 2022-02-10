@@ -1,19 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Bank.Shared.Events;
+﻿namespace Bank.Shared.Domain.Entities {
 
-namespace Bank.Shared.Domain.Entities {
+	using Bank.Shared.Events;
 
 	public abstract class AggregateBase<TId> :
 		IEntity<TId> {
 
+		private readonly ICollection<IEvent<TId>> _uncommittedEvents = new List<IEvent<TId>>();
+
 		public TId Id { get; protected set; }
 
 		private void ApplyEvent(IEvent<TId> @event) {
-			if (!UncommittedEvents.Any(e => Equals(e.Id, @event.Id))) {
+			if (!_uncommittedEvents.Any(e => Equals(e.Id, @event.Id))) {
 				((dynamic)this).Apply((dynamic)@event);
 			}
 		}
@@ -23,15 +20,17 @@ namespace Bank.Shared.Domain.Entities {
 
 			ApplyEvent(@event);
 
-			UncommittedEvents.Add(@event);
+			_uncommittedEvents.Add(@event);
 		}
 
 		// Unsure if this is needed since the list is publicly exposed
 		public void ClearUncommittedEvents() {
-			UncommittedEvents.Clear();
+			_uncommittedEvents.Clear();
 		}
 
-		public ICollection<IEvent<TId>> UncommittedEvents = new List<IEvent<TId>>();
+		public IEnumerable<IEvent<TId>> GetUncommittedEvents() {
+			return _uncommittedEvents.AsEnumerable();
+		}
 
 	}
 

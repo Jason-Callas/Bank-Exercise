@@ -7,6 +7,7 @@
 	using Xunit;
 	using Bank.Shared.Events;
 	using Bank.Shared.UnitTests.Fixtures;
+	using Bank.Shared.Exceptions;
 
 	[Trait("Type", "Unit")]
 	[Trait("Category", "Entity")]
@@ -25,16 +26,16 @@
 			// ** Arrange
 
 			var expectedEvents = new IEvent<Guid>[] {
-				new AccountCreated(_dataFixture.DefaultAccountId, _dataFixture.DefaultCustomerName)
+				new AccountCreated(_dataFixture.DefaultAccountId, _dataFixture.DefaultCustomerName, _dataFixture.DefaultCurrency)
 			};
 
 			// ** Act
 
-			var account = new Account(_dataFixture.DefaultAccountId, _dataFixture.DefaultCustomerName);
+			var account = new Account(_dataFixture.DefaultAccountId, _dataFixture.DefaultCustomerName, _dataFixture.DefaultCurrency);
 
 			// ** Assert
 
-			account.UncommittedEvents.Should()
+			account.GetUncommittedEvents().Should()
 				.BeEquivalentTo(expectedEvents, options =>
 					options
 						.Excluding(x => x.Id)
@@ -49,13 +50,13 @@
 
 			// ** Act
 
-			Action act = () => new Account(_dataFixture.DefaultAccountId, "Joe Dirt with a name that is too long to fit in the property but I need more words...");
+			Action act = () => new Account(_dataFixture.DefaultAccountId, "Joe Dirt with a name that is too long to fit in the property but I need more words...", _dataFixture.DefaultCurrency);
 
 			// ** Assert
 
 			// Pretty sure I need to review/adjust validation handling and the types of exceptions thrown
 			act.Should()
-				.Throw<ArgumentOutOfRangeException>();
+				.Throw<ArgumentException>();
 		}
 
 		[Fact()]
@@ -64,7 +65,7 @@
 		public void When_AccountOverdraftLimitIsChangedToValidValue_Expect_CommandToBeCompleted() {
 			// ** Arrange
 
-			var account = new Account(_dataFixture.DefaultAccountId, _dataFixture.DefaultCustomerName);
+			var account = new Account(_dataFixture.DefaultAccountId, _dataFixture.DefaultCustomerName, _dataFixture.DefaultCurrency);
 			account.ClearUncommittedEvents();
 
 			var newLimit = new Money(300m, _dataFixture.DefaultCurrency);
@@ -79,7 +80,7 @@
 
 			// ** Assert
 
-			account.UncommittedEvents.Should()
+			account.GetUncommittedEvents().Should()
 				.BeEquivalentTo(expectedEvents, options =>
 					options
 						.Excluding(x => x.Id)
@@ -93,7 +94,7 @@
 		public void When_AccountOverdraftLimitIsChangedToZero_Expect_CommandToBeCompleted() {
 			// ** Arrange
 
-			var account = new Account(_dataFixture.DefaultAccountId, _dataFixture.DefaultCustomerName);
+			var account = new Account(_dataFixture.DefaultAccountId, _dataFixture.DefaultCustomerName, _dataFixture.DefaultCurrency);
 			account.ClearUncommittedEvents();
 
 			var newLimit = new Money(0m, _dataFixture.DefaultCurrency);
@@ -108,7 +109,7 @@
 
 			// ** Assert
 
-			account.UncommittedEvents.Should()
+			account.GetUncommittedEvents().Should()
 				.BeEquivalentTo(expectedEvents, options =>
 					options
 						.Excluding(x => x.Id)
@@ -122,7 +123,7 @@
 		public void When_AccountOverdraftLimitIsChangedToNegativeValue_Expect_ExceptionToBeThrown() {
 			// ** Arrange
 
-			var account = new Account(_dataFixture.DefaultAccountId, _dataFixture.DefaultCustomerName);
+			var account = new Account(_dataFixture.DefaultAccountId, _dataFixture.DefaultCustomerName, _dataFixture.DefaultCurrency);
 			account.ClearUncommittedEvents();
 
 			var newLimit = new Money(-250m, _dataFixture.DefaultCurrency);        // negative value not allowed
@@ -140,10 +141,31 @@
 		[Fact()]
 		[Trait("Class", nameof(Account))]
 		[Trait("Method", nameof(Account.SetOverdraftLimit))]
+		public void When_AccountOverdraftLimitIsChangedWithDifferentCurrencyThanAccount_Expect_ExceptionToBeThrown() {
+			// ** Arrange
+
+			var account = new Account(_dataFixture.DefaultAccountId, _dataFixture.DefaultCustomerName, _dataFixture.DefaultCurrency);
+			account.ClearUncommittedEvents();
+
+			var newLimit = new Money(200m, "USD");        // Account is set to GSB
+
+			// ** Act
+
+			Action act = () => account.SetOverdraftLimit(newLimit);
+
+			// ** Assert
+
+			act.Should()
+				.Throw<InvalidCurrencyException>();
+		}
+
+		[Fact()]
+		[Trait("Class", nameof(Account))]
+		[Trait("Method", nameof(Account.SetDailyWireTransferLimit))]
 		public void When_AccountDailyWireTransferLimitIsChangedToValidValue_Expect_CommandToBeCompleted() {
 			// ** Arrange
 
-			var account = new Account(_dataFixture.DefaultAccountId, _dataFixture.DefaultCustomerName);
+			var account = new Account(_dataFixture.DefaultAccountId, _dataFixture.DefaultCustomerName, _dataFixture.DefaultCurrency);
 			account.ClearUncommittedEvents();
 
 			var newLimit = new Money(300m, _dataFixture.DefaultCurrency);
@@ -158,7 +180,7 @@
 
 			// ** Assert
 
-			account.UncommittedEvents.Should()
+			account.GetUncommittedEvents().Should()
 				.BeEquivalentTo(expectedEvents, options =>
 					options
 						.Excluding(x => x.Id)
@@ -168,11 +190,11 @@
 
 		[Fact()]
 		[Trait("Class", nameof(Account))]
-		[Trait("Method", nameof(Account.SetOverdraftLimit))]
+		[Trait("Method", nameof(Account.SetDailyWireTransferLimit))]
 		public void When_AccountDailyWireTransferLimitIsChangedToZero_Expect_CommandToBeCompleted() {
 			// ** Arrange
 
-			var account = new Account(_dataFixture.DefaultAccountId, _dataFixture.DefaultCustomerName);
+			var account = new Account(_dataFixture.DefaultAccountId, _dataFixture.DefaultCustomerName, _dataFixture.DefaultCurrency);
 			account.ClearUncommittedEvents();
 
 			var newLimit = new Money(0m, _dataFixture.DefaultCurrency);
@@ -187,7 +209,7 @@
 
 			// ** Assert
 
-			account.UncommittedEvents.Should()
+			account.GetUncommittedEvents().Should()
 				.BeEquivalentTo(expectedEvents, options =>
 					options
 						.Excluding(x => x.Id)
@@ -197,11 +219,11 @@
 
 		[Fact()]
 		[Trait("Class", nameof(Account))]
-		[Trait("Method", nameof(Account.SetOverdraftLimit))]
+		[Trait("Method", nameof(Account.SetDailyWireTransferLimit))]
 		public void When_AccountDailyWireTransferLimitIsChangedToNegativeValue_Expect_ExceptionToBeThrown() {
 			// ** Arrange
 
-			var account = new Account(_dataFixture.DefaultAccountId, _dataFixture.DefaultCustomerName);
+			var account = new Account(_dataFixture.DefaultAccountId, _dataFixture.DefaultCustomerName, _dataFixture.DefaultCurrency);
 			account.ClearUncommittedEvents();
 
 			var newLimit = new Money(-250m, _dataFixture.DefaultCurrency);        // negative value not allowed
@@ -214,6 +236,27 @@
 
 			act.Should()
 				.Throw<ArgumentException>();
+		}
+
+		[Fact()]
+		[Trait("Class", nameof(Account))]
+		[Trait("Method", nameof(Account.SetDailyWireTransferLimit))]
+		public void When_AccountDailyWireTransferLimitIsChangedWithDifferentCurrencyThanAccount_Expect_ExceptionToBeThrown() {
+			// ** Arrange
+
+			var account = new Account(_dataFixture.DefaultAccountId, _dataFixture.DefaultCustomerName, _dataFixture.DefaultCurrency);
+			account.ClearUncommittedEvents();
+
+			var newLimit = new Money(200m, "USD");        // Account is set to GSB
+
+			// ** Act
+
+			Action act = () => account.SetDailyWireTransferLimit(newLimit);
+
+			// ** Assert
+
+			act.Should()
+				.Throw<InvalidCurrencyException>();
 		}
 
 	}

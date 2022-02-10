@@ -12,7 +12,7 @@
 		public string DefaultCurrency { get => "GBP"; }
 
 		private Account CreateNewAccountWithNoTransactions(Guid? id) {
-			return new Account(id ?? DefaultAccountId, DefaultCustomerName);
+			return new Account(id ?? DefaultAccountId, DefaultCustomerName, DefaultCurrency);
 		}
 
 		public Account GetNewAccount(Guid? id = null) {
