@@ -43,9 +43,24 @@
 			OverdraftLimit = @event.Limit;
 		}
 
-		internal void Apply(AccountDailyWireTransferLimitChanged evt) {
-			DailyWireTransferLimit = evt.Limit;
+		internal void Apply(AccountDailyWireTransferLimitChanged @event) {
+			DailyWireTransferLimit = @event.Limit;
 		}
+
+		internal void Apply(AccountCashDeposited @event) {
+			Transactions.Add(new AccountTransaction(@event.Amount.Amount, @event.TimestampUtc));
+		}
+
+		private void ValidateCurrencyOrThrow(Money value, string actionLabel) {
+			if (!string.Equals(value.Currency, Currency, StringComparison.OrdinalIgnoreCase)) {
+				throw new InvalidCurrencyException($"Unable to accept {actionLabel} due to currency mismatch. Account is configured for '{Currency}' but new value is '{value.Currency}'.");
+			}
+		}
+
+		//private decimal GetCurrentBalance() {
+		//	// Transaction order does not matter
+		//	return Transactions.Select(t => t.Amount).Sum();
+		//}
 
 		public void SetOverdraftLimit(Money limit) {
 			Guard.Against.Null(limit, nameof(limit));
@@ -56,9 +71,7 @@
 			Guard.Against.Negative(limit.Amount, nameof(limit));
 			Guard.Against.Null(limit.Currency, nameof(limit.Currency));
 
-			if (!string.Equals(limit.Currency, Currency, StringComparison.OrdinalIgnoreCase)) {
-				throw new InvalidCurrencyException($"Unable to set Overdraft Limit due to currency mismatch. Account is configured for '{Currency}' but new limit value is '{limit.Currency}'.");
-			}
+			ValidateCurrencyOrThrow(limit, "Overdraft Limit");
 
 			RaiseEvent(new AccountOverdraftLimitChanged(Id, limit));
 		}
@@ -69,11 +82,20 @@
 			Guard.Against.Negative(limit.Amount, nameof(limit));
 			Guard.Against.Null(limit.Currency, nameof(limit.Currency));
 
-			if (!string.Equals(limit.Currency, Currency, StringComparison.OrdinalIgnoreCase)) {
-				throw new InvalidCurrencyException($"Unable to set Overdraft Limit due to currency mismatch. Account is configured for '{Currency}' but new limit value is '{limit.Currency}'.");
-			}
+			ValidateCurrencyOrThrow(limit, "Daily Wire Transfer Limit");
 
 			RaiseEvent(new AccountDailyWireTransferLimitChanged(Id, limit));
+		}
+
+		public void DepositCash(Money amount) {
+			Guard.Against.Null(amount, nameof(amount));
+
+			Guard.Against.Negative(amount.Amount, nameof(amount));
+			Guard.Against.Null(amount.Currency, nameof(amount.Currency));
+
+			ValidateCurrencyOrThrow(amount, "Cash Deposit");
+
+			RaiseEvent(new AccountCashDeposited(Id, amount));
 		}
 
 		private string CustomerName { get; set; }
@@ -83,6 +105,8 @@
 		private Money OverdraftLimit { get; set; }
 
 		private Money DailyWireTransferLimit { get; set; }
+
+		private ICollection<AccountTransaction> Transactions { get; set; } = new List<AccountTransaction>();
 
 	}
 

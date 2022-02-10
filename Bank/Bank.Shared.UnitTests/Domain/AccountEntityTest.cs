@@ -259,6 +259,88 @@
 				.Throw<InvalidCurrencyException>();
 		}
 
+		[Fact()]
+		[Trait("Class", nameof(Account))]
+		[Trait("Method", nameof(Account.DepositCash))]
+		public void When_CashIsDepositedIntoAccount_Expect_CommandToBeCompleted() {
+			// ** Arrange
+
+			var account = new Account(_dataFixture.DefaultAccountId, _dataFixture.DefaultCustomerName, _dataFixture.DefaultCurrency);
+			account.ClearUncommittedEvents();
+
+			var deposit = new Money(1000m, _dataFixture.DefaultCurrency);
+
+			var expectedEvents = new IEvent<Guid>[] {
+				new AccountCashDeposited(_dataFixture.DefaultAccountId, deposit)
+			};
+
+			// ** Act
+
+			account.DepositCash(deposit);
+
+			// ** Assert
+
+			account.GetUncommittedEvents().Should()
+				.BeEquivalentTo(expectedEvents, options =>
+					options
+						.Excluding(x => x.Id)
+						.Excluding(x => x.TimestampUtc)
+				);
+		}
+
+		[Fact()]
+		[Trait("Class", nameof(Account))]
+		[Trait("Method", nameof(Account.DepositCash))]
+		public void When_MultipleCashDepositsAreMadeToAccount_Expect_CommandsToBeCompleted() {
+			// ** Arrange
+
+			var account = new Account(_dataFixture.DefaultAccountId, _dataFixture.DefaultCustomerName, _dataFixture.DefaultCurrency);
+			account.ClearUncommittedEvents();
+
+			var deposit1 = new Money(1000m, _dataFixture.DefaultCurrency);
+			var deposit2 = new Money(500m, _dataFixture.DefaultCurrency);
+
+			var expectedEvents = new IEvent<Guid>[] {
+				new AccountCashDeposited(_dataFixture.DefaultAccountId, deposit1),
+				new AccountCashDeposited(_dataFixture.DefaultAccountId, deposit2)
+			};
+
+			// ** Act
+
+			account.DepositCash(deposit1);
+			account.DepositCash(deposit2);
+
+			// ** Assert
+
+			account.GetUncommittedEvents().Should()
+				.BeEquivalentTo(expectedEvents, options =>
+					options
+						.Excluding(x => x.Id)
+						.Excluding(x => x.TimestampUtc)
+				);
+		}
+
+		[Fact()]
+		[Trait("Class", nameof(Account))]
+		[Trait("Method", nameof(Account.SetDailyWireTransferLimit))]
+		public void When_CashIsDepositedIntoAccountButWithDifferentCurrency_Expect_ExceptionToBeThrown() {
+			// ** Arrange
+
+			var account = new Account(_dataFixture.DefaultAccountId, _dataFixture.DefaultCustomerName, _dataFixture.DefaultCurrency);
+			account.ClearUncommittedEvents();
+
+			var deposit = new Money(275m, "USD");        // Account is set to GSB
+
+			// ** Act
+
+			Action act = () => account.DepositCash(deposit);
+
+			// ** Assert
+
+			act.Should()
+				.Throw<InvalidCurrencyException>();
+		}
+
 	}
 
 }
