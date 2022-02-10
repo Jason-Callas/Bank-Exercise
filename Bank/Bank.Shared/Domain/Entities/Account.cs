@@ -51,6 +51,10 @@
 			Transactions.Add(new AccountTransaction(@event.Amount.Amount, @event.TimestampUtc));
 		}
 
+		internal void Apply(AccountCheckDeposited @event) {
+			Transactions.Add(new AccountTransaction(@event.Amount.Amount, @event.TimestampUtc, wasCheck: true));
+		}
+
 		private void ValidateCurrencyOrThrow(Money value, string actionLabel) {
 			if (!string.Equals(value.Currency, Currency, StringComparison.OrdinalIgnoreCase)) {
 				throw new InvalidCurrencyException($"Unable to accept {actionLabel} due to currency mismatch. Account is configured for '{Currency}' but new value is '{value.Currency}'.");
@@ -96,6 +100,18 @@
 			ValidateCurrencyOrThrow(amount, "Cash Deposit");
 
 			RaiseEvent(new AccountCashDeposited(Id, amount));
+		}
+
+
+		public void DepositCheck(Money amount) {
+			Guard.Against.Null(amount, nameof(amount));
+
+			Guard.Against.Negative(amount.Amount, nameof(amount));
+			Guard.Against.Null(amount.Currency, nameof(amount.Currency));
+
+			ValidateCurrencyOrThrow(amount, "Check Deposit");
+
+			RaiseEvent(new AccountCheckDeposited(Id, amount));
 		}
 
 		private string CustomerName { get; set; }
