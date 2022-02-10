@@ -16,24 +16,24 @@
 
 	[Trait("Type", "Unit")]
 	[Trait("Category", "Handler")]
-	public class ChangeOverdraftLimitHandlerTest :
+	public class ChangeDailyWireTransferLimitHandlerTest :
 		IClassFixture<AccountDataFixture> {
 
 		private readonly AccountDataFixture _dataFixture;
 
-		public ChangeOverdraftLimitHandlerTest(AccountDataFixture dataFixture) {
+		public ChangeDailyWireTransferLimitHandlerTest(AccountDataFixture dataFixture) {
 			_dataFixture = dataFixture ?? throw new ArgumentNullException(nameof(dataFixture));
 		}
 
 		[Fact()]
-		[Trait("Class", nameof(ChangeOverdraftLimitHandler))]
-		[Trait("Method", nameof(ChangeOverdraftLimitHandler.Handle))]
+		[Trait("Class", nameof(ChangeDailyWireTransferLimitHandler))]
+		[Trait("Method", nameof(ChangeDailyWireTransferLimitHandler.Handle))]
 		public async Task When_NullCommandIsPassedToHandler_Expect_ExceptionToBeThrown() {
 			// ** Arrange
 
 			var mockRepository = new Mock<IAccountRepository>();
 
-			var handler = new ChangeOverdraftLimitHandler(mockRepository.Object);
+			var handler = new ChangeDailyWireTransferLimitHandler(mockRepository.Object);
 
 			// ** Act
 
@@ -46,18 +46,19 @@
 		}
 
 		[Fact()]
-		[Trait("Class", nameof(ChangeOverdraftLimitHandler))]
-		[Trait("Method", nameof(ChangeOverdraftLimitHandler.Handle))]
+		[Trait("Class", nameof(ChangeDailyWireTransferLimitHandler))]
+		[Trait("Method", nameof(ChangeDailyWireTransferLimitHandler.Handle))]
 		public async Task When_CommandWithIdThatDoesNotExistsIsPassedToHandler_Expect_ExceptionToBeThrown() {
 			// ** Arrange
 
-			var command = new ChangeOverdraftLimit() {
-				AccountId = Guid.NewGuid()
+			var command = new ChangeDailyTransferLimit() {
+				AccountId = Guid.NewGuid(),
+				Amount = 200m
 			};
 
 			var mockRepository = new Mock<IAccountRepository>();
 
-			var handler = new ChangeOverdraftLimitHandler(mockRepository.Object);
+			var handler = new ChangeDailyWireTransferLimitHandler(mockRepository.Object);
 
 			// ** Act
 
@@ -70,8 +71,8 @@
 		}
 
 		[Fact()]
-		[Trait("Class", nameof(ChangeOverdraftLimitHandler))]
-		[Trait("Method", nameof(ChangeOverdraftLimitHandler.Handle))]
+		[Trait("Class", nameof(ChangeDailyWireTransferLimitHandler))]
+		[Trait("Method", nameof(ChangeDailyWireTransferLimitHandler.Handle))]
 		public async Task When_CommandWithIdThatExistsIsPassedToHandler_Expect_AccountToBeUpdated() {
 			// ** Arrange
 
@@ -79,7 +80,7 @@
 
 			var expectedLimit = new Money(325m, _dataFixture.DefaultCurrency);
 
-			var command = new ChangeOverdraftLimit() {
+			var command = new ChangeDailyTransferLimit() {
 				AccountId = Guid.NewGuid(),
 				Amount = expectedLimit.Amount,
 				Currency = expectedLimit.Currency
@@ -94,7 +95,7 @@
 			mockRepository.Setup(x => x.UpdateAsync(It.IsAny<Account>()))
 				.Callback<Account>(x => updateWasCalled = true);
 
-			var handler = new ChangeOverdraftLimitHandler(mockRepository.Object);
+			var handler = new ChangeDailyWireTransferLimitHandler(mockRepository.Object);
 
 			// ** Act
 

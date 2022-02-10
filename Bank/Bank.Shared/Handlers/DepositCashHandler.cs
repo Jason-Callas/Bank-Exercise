@@ -9,24 +9,24 @@
 	using Bank.Shared.Repositories;
 	using MediatR;
 
-	public class ChangeOverdraftLimitHandler :
-		ICommandHandler<ChangeOverdraftLimit> {
+	public class DepositCashHandler :
+		ICommandHandler<DepositCash> {
 
 		private readonly IAccountRepository _accountRepo;
 
-		public ChangeOverdraftLimitHandler(IAccountRepository accountRepo) {
+		public DepositCashHandler(IAccountRepository accountRepo) {
 			_accountRepo = Guard.Against.Null(accountRepo);
 		}
 
-		public async Task<Unit> Handle(ChangeOverdraftLimit request, CancellationToken cancellationToken) {
+		public async Task<Unit> Handle(DepositCash request, CancellationToken cancellationToken) {
 			Guard.Against.Null(request);
 
 			var existingAccount = await _accountRepo.GetByIdAsync(request.AccountId);
 			if (existingAccount is null) {
-				throw new AccountNotExistException(request.AccountId, "Unable to set overdraft limit on account that does not exist.");
+				throw new AccountNotExistException(request.AccountId, "Unable to process deposit into account that does not exist.");
 			}
 
-			existingAccount.SetOverdraftLimit(new Money(request.Amount, request.Currency));
+			existingAccount.DepositCash(new Money(request.Amount, request.Currency));
 
 			await _accountRepo.UpdateAsync(existingAccount);
 

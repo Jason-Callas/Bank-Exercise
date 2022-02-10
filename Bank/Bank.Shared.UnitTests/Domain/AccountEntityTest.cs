@@ -22,6 +22,7 @@
 
 		[Fact()]
 		[Trait("Class", nameof(Account))]
+		[Trait("Method", "ctor")]
 		public void When_CreateAccountWithValidParametersIsCalled_Expect_CommandToBeCompleted() {
 			// ** Arrange
 
@@ -45,6 +46,7 @@
 
 		[Fact()]
 		[Trait("Class", nameof(Account))]
+		[Trait("Method", "ctor")]
 		public void When_CreateAccountWithInvalidParametersIsCalled_Expect_ExceptionToBeThrown() {
 			// ** Arrange
 
@@ -322,7 +324,7 @@
 
 		[Fact()]
 		[Trait("Class", nameof(Account))]
-		[Trait("Method", nameof(Account.SetDailyWireTransferLimit))]
+		[Trait("Method", nameof(Account.DepositCash))]
 		public void When_CashIsDepositedIntoAccountButWithDifferentCurrency_Expect_ExceptionToBeThrown() {
 			// ** Arrange
 

@@ -26,7 +26,7 @@
 		[Fact()]
 		[Trait("Class", nameof(QueryAccountByIdHandler))]
 		[Trait("Method", nameof(QueryAccountByIdHandler.Handle))]
-		public void When_NullCommandIsPassedToHandler_Expect_ExceptionToBeThrown() {
+		public async Task When_NullCommandIsPassedToHandler_Expect_ExceptionToBeThrown() {
 			// ** Arrange
 
 			var mockRepository = new Mock<IAccountRepository>();
@@ -39,7 +39,7 @@
 
 			// ** Assert
 
-			act.Should()
+			await act.Should()
 				.ThrowAsync<ArgumentNullException>();
 		}
 
