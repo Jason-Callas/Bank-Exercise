@@ -39,6 +39,7 @@
 			account.GetUncommittedEvents().Should()
 				.BeEquivalentTo(expectedEvents, options =>
 					options
+						.RespectingRuntimeTypes()
 						.Excluding(x => x.Id)
 						.Excluding(x => x.TimestampUtc)
 				);
@@ -85,6 +86,7 @@
 			account.GetUncommittedEvents().Should()
 				.BeEquivalentTo(expectedEvents, options =>
 					options
+						.RespectingRuntimeTypes()
 						.Excluding(x => x.Id)
 						.Excluding(x => x.TimestampUtc)
 				);
@@ -114,6 +116,7 @@
 			account.GetUncommittedEvents().Should()
 				.BeEquivalentTo(expectedEvents, options =>
 					options
+						.RespectingRuntimeTypes()
 						.Excluding(x => x.Id)
 						.Excluding(x => x.TimestampUtc)
 				);
@@ -185,6 +188,7 @@
 			account.GetUncommittedEvents().Should()
 				.BeEquivalentTo(expectedEvents, options =>
 					options
+						.RespectingRuntimeTypes()
 						.Excluding(x => x.Id)
 						.Excluding(x => x.TimestampUtc)
 				);
@@ -214,6 +218,7 @@
 			account.GetUncommittedEvents().Should()
 				.BeEquivalentTo(expectedEvents, options =>
 					options
+						.RespectingRuntimeTypes()
 						.Excluding(x => x.Id)
 						.Excluding(x => x.TimestampUtc)
 				);
@@ -285,6 +290,7 @@
 			account.GetUncommittedEvents().Should()
 				.BeEquivalentTo(expectedEvents, options =>
 					options
+						.RespectingRuntimeTypes()
 						.Excluding(x => x.Id)
 						.Excluding(x => x.TimestampUtc)
 				);
@@ -317,6 +323,7 @@
 			account.GetUncommittedEvents().Should()
 				.BeEquivalentTo(expectedEvents, options =>
 					options
+						.RespectingRuntimeTypes()
 						.Excluding(x => x.Id)
 						.Excluding(x => x.TimestampUtc)
 				);
@@ -367,6 +374,7 @@
 			account.GetUncommittedEvents().Should()
 				.BeEquivalentTo(expectedEvents, options =>
 					options
+						.RespectingRuntimeTypes()
 						.Excluding(x => x.Id)
 						.Excluding(x => x.TimestampUtc)
 				);
@@ -399,6 +407,7 @@
 			account.GetUncommittedEvents().Should()
 				.BeEquivalentTo(expectedEvents, options =>
 					options
+						.RespectingRuntimeTypes()
 						.Excluding(x => x.Id)
 						.Excluding(x => x.TimestampUtc)
 				);
@@ -423,6 +432,137 @@
 
 			act.Should()
 				.Throw<InvalidCurrencyException>();
+		}
+
+		[Fact()]
+		[Trait("Class", nameof(Account))]
+		[Trait("Method", nameof(Account.WithdrawCash))]
+		public void When_CashIsWithdrawnFromAccountButBalanceAndOverdrawLimitIsZero_Expect_RequestToFail() {
+			// ** Arrange
+
+			var account = new Account(_dataFixture.DefaultAccountId, _dataFixture.DefaultCustomerName, _dataFixture.DefaultCurrency);
+			account.SetOverdraftLimit(new Money(0m, _dataFixture.DefaultCurrency));
+			account.ClearUncommittedEvents();
+
+			var withdrawal = new Money(100m, _dataFixture.DefaultCurrency);
+
+			var expectedEvents = new IEvent<Guid>[] {
+				new AccountCashWithdrawalRejected(_dataFixture.DefaultAccountId, withdrawal, "Account does not have sufficient funds.")
+			};
+
+			// ** Act
+
+			account.WithdrawCash(withdrawal);
+
+			// ** Assert
+
+			account.GetUncommittedEvents().Should()
+				.BeEquivalentTo(expectedEvents, options =>
+					options
+						.RespectingRuntimeTypes()
+						.Excluding(x => x.Id)
+						.Excluding(x => x.TimestampUtc)
+				);
+		}
+
+		[Fact()]
+		[Trait("Class", nameof(Account))]
+		[Trait("Method", nameof(Account.WithdrawCash))]
+		public void When_CashIsWithdrawnFromAccountThatHasEnoughFunds_Expect_RequestToSucceed() {
+			// ** Arrange
+
+			var account = new Account(_dataFixture.DefaultAccountId, _dataFixture.DefaultCustomerName, _dataFixture.DefaultCurrency);
+			account.DepositCash(new Money(200m, _dataFixture.DefaultCurrency));
+			account.SetOverdraftLimit(new Money(0m, _dataFixture.DefaultCurrency));
+			account.ClearUncommittedEvents();
+
+			var withdrawal = new Money(100m, _dataFixture.DefaultCurrency);
+
+			var expectedEvents = new IEvent<Guid>[] {
+				new AccountCashWithdrawn(_dataFixture.DefaultAccountId, withdrawal)
+			};
+
+			// ** Act
+
+			account.WithdrawCash(withdrawal);
+
+			// ** Assert
+
+			account.GetUncommittedEvents().Should()
+				.BeEquivalentTo(expectedEvents, options =>
+					options
+						.RespectingRuntimeTypes()
+						.Excluding(x => x.Id)
+						.Excluding(x => x.TimestampUtc)
+				);
+		}
+
+		[Fact()]
+		[Trait("Class", nameof(Account))]
+		[Trait("Method", nameof(Account.WithdrawCash))]
+		public void When_CashIsWithdrawnFromAccountThatHasEnoughFundsDueToOverdraftLimit_Expect_RequestToSucceed() {
+			// ** Arrange
+
+			var account = new Account(_dataFixture.DefaultAccountId, _dataFixture.DefaultCustomerName, _dataFixture.DefaultCurrency);
+			account.DepositCash(new Money(100m, _dataFixture.DefaultCurrency));
+			account.SetOverdraftLimit(new Money(100m, _dataFixture.DefaultCurrency));
+			account.ClearUncommittedEvents();
+
+			var withdrawal = new Money(100m, _dataFixture.DefaultCurrency);
+
+			var expectedEvents = new IEvent<Guid>[] {
+				new AccountCashWithdrawn(_dataFixture.DefaultAccountId, withdrawal)
+			};
+
+			// ** Act
+
+			account.WithdrawCash(withdrawal);
+
+			// ** Assert
+
+			var x = account.GetUncommittedEvents();
+
+			account.GetUncommittedEvents().Should()
+				.BeEquivalentTo(expectedEvents, options =>
+					options
+						.RespectingRuntimeTypes()
+						.Excluding(x => x.Id)
+						.Excluding(x => x.TimestampUtc)
+				);
+		}
+
+		[Fact()]
+		[Trait("Class", nameof(Account))]
+		[Trait("Method", nameof(Account.WithdrawCash))]
+		public void When_CashIsWithdrawnFromAccountThatExceedsOverdraftLimit_Expect_RequestToFail() {
+			// ** Arrange
+
+			var account = new Account(_dataFixture.DefaultAccountId, _dataFixture.DefaultCustomerName, _dataFixture.DefaultCurrency);
+			account.DepositCash(new Money(25m, _dataFixture.DefaultCurrency));
+			account.SetOverdraftLimit(new Money(50m, _dataFixture.DefaultCurrency));
+			account.ClearUncommittedEvents();
+
+			var withdrawal = new Money(100m, _dataFixture.DefaultCurrency);
+
+			var expectedEvents = new IEvent<Guid>[] {
+				new AccountCashWithdrawn(_dataFixture.DefaultAccountId, withdrawal)
+			};
+
+			// ** Act
+
+			account.WithdrawCash(withdrawal);
+
+			// ** Assert
+
+			var x = account.GetUncommittedEvents();
+
+			account.GetUncommittedEvents().Should()
+				.BeEquivalentTo(expectedEvents, options =>
+					options
+						.RespectingRuntimeTypes()
+						.Excluding(x => x.Id)
+						.Excluding(x => x.TimestampUtc)
+				);
 		}
 
 	}

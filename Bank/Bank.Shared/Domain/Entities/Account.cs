@@ -48,11 +48,19 @@
 		}
 
 		internal void Apply(AccountCashDeposited @event) {
-			Transactions.Add(new AccountTransaction(@event.Amount.Amount, @event.TimestampUtc));
+			Transactions.Add(new DepositCashAccountTransaction(@event.Amount.Amount, @event.TimestampUtc));
 		}
 
 		internal void Apply(AccountCheckDeposited @event) {
-			Transactions.Add(new AccountTransaction(@event.Amount.Amount, @event.TimestampUtc, wasCheck: true));
+			Transactions.Add(new DepositCheckAccountTransaction(@event.Amount.Amount, @event.TimestampUtc));
+		}
+
+		internal void Apply(AccountCashWithdrawn @event) {
+			Transactions.Add(new WithdrawCashAccountTransaction(@event.Amount.Amount, @event.TimestampUtc, true));
+		}
+
+		internal void Apply(AccountCashWithdrawalRejected @event) {
+			Transactions.Add(new WithdrawCashAccountTransaction(@event.Amount.Amount, @event.TimestampUtc, false));
 		}
 
 		private void ValidateCurrencyOrThrow(Money value, string actionLabel) {
@@ -61,10 +69,56 @@
 			}
 		}
 
-		//private decimal GetCurrentBalance() {
-		//	// Transaction order does not matter
-		//	return Transactions.Select(t => t.Amount).Sum();
-		//}
+		private bool IsAccountBlocked() {
+			// ** The logic for this is as follows
+			// **   1. Start with an unblocked account
+			// **   2. Cycle through transactions and toggle flag as needed
+			// **       a. Rejected debits will set the account as blocked
+			// **       b. Cash credits on blocked account will immediately unblock account
+			// **       c. Check credits will unblock a blocked account if the funds are available after the blocking
+
+			var lastBlockingTransaction = default(AccountTransaction);
+
+			// Transaction order DOES matter
+
+			foreach (var trans in Transactions.OrderBy(t => t.TimestampUtc).ToArray()) {
+				if (trans is DepositCashAccountTransaction && lastBlockingTransaction is not null) {
+					lastBlockingTransaction = null;
+				}
+
+				// Purposely leaving the successful check separate from the one or many type checks
+				if (!trans.IsSuccessful) {
+					if (trans is WithdrawCashAccountTransaction) {
+						lastBlockingTransaction = trans;
+					}
+				}
+			}
+
+			return (lastBlockingTransaction is not null);
+		}
+
+		private decimal GetAvailableBalance() {
+			// Transaction order does NOT matter
+			return Transactions.Where(t => t.IsSuccessful).Select(t => t.ApplicableAmount).Sum();
+		}
+
+		private DebitApproval IsDebitAllowed(decimal amount) {
+			// ** Need to check/calculate if Blocked
+
+			var availableBalance = GetAvailableBalance();
+			if (availableBalance < amount) {
+				if (OverdraftLimit.Amount == 0m) {
+					return DebitApproval.InsufficientFunds;
+				}
+
+				var availableFunds = availableBalance + OverdraftLimit.Amount;
+				if (availableFunds < amount) {
+					return DebitApproval.OverdraftExceeded;
+				}
+			}
+
+			return DebitApproval.Approved;
+		}
 
 		public void SetOverdraftLimit(Money limit) {
 			Guard.Against.Null(limit, nameof(limit));
@@ -102,7 +156,6 @@
 			RaiseEvent(new AccountCashDeposited(Id, amount));
 		}
 
-
 		public void DepositCheck(Money amount) {
 			Guard.Against.Null(amount, nameof(amount));
 
@@ -112,6 +165,48 @@
 			ValidateCurrencyOrThrow(amount, "Check Deposit");
 
 			RaiseEvent(new AccountCheckDeposited(Id, amount));
+		}
+
+		public void WithdrawCash(Money amount) {
+			Guard.Against.Null(amount, nameof(amount));
+
+			Guard.Against.Negative(amount.Amount, nameof(amount));
+			Guard.Against.Null(amount.Currency, nameof(amount.Currency));
+
+			ValidateCurrencyOrThrow(amount, "Cash Withdrawl");
+
+			var approval = IsDebitAllowed(amount.Amount);
+
+			if (approval == DebitApproval.Approved) {
+				// ** Let withdrawal happen
+				RaiseEvent(new AccountCashWithdrawn(Id, amount));
+			}
+			else {
+				// ** Do NOT let withdrawal happen
+
+				var reason = default(string);
+
+				switch (approval) {
+					case DebitApproval.AccountBlocked:
+						reason = "Account is currently blocked from any withdrawals.";
+						break;
+					case DebitApproval.InsufficientFunds:
+						reason = "Account does not have sufficient funds.";
+						break;
+					case DebitApproval.OverdraftExceeded:
+						reason = "Account does not have sufficient funds and withdrawal exceeded overdraft limit.";
+						break;
+				}
+
+				RaiseEvent(new AccountCashWithdrawalRejected(Id, amount, reason));
+
+				// ** An argument can be made that there should **also* be an event to "block" the account. However, that _could_
+				// ** imply that there _then_ needs to be an event that "unblocks" it. While that is easy to do if a **cash** deposit
+				// ** is made, how does that get handled when a deposited **check** becomes available the next day.
+				// **
+				// ** One solution would be a timer that performs checks but that is not feasible. Another possibility would
+				// ** would be to add another check
+			}
 		}
 
 		private string CustomerName { get; set; }
