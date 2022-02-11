@@ -4,11 +4,12 @@
 	using Bank.Shared.Domain.ValueObjects;
 	using Bank.Shared.Events;
 	using Bank.Shared.Exceptions;
+	using NodaTime;
 
 	public class Account :
 		AggregateBase<Guid>, IAggregateRoot{
 
-		public Account(Guid id, string name, string currency) {
+		public Account(Guid id, string name, string currency) : base() {
 			// Need to research this more. Some "guard" libraries support checking string length but others (this one for example, put length check in
 			// the realm of validation which _seems_ to NOT be the same as "guard" checks...
 
@@ -30,6 +31,11 @@
 			RaiseEvent(new AccountCreated(id, name, currency));
 		}
 
+		// Really, really hate the idea of exposing this ctor simply for purposes of unit testing or _maybe_ reconstituting entuty
+		// from store. There HAS to be a "cleaner" way...
+		public Account(IEnumerable<IEvent<Guid>> events) : base(events) {
+		}
+
 		internal void Apply(AccountCreated @event) {
 			Id = @event.AggregateId;
 			CustomerName = @event.CustomerName;
@@ -48,19 +54,19 @@
 		}
 
 		internal void Apply(AccountCashDeposited @event) {
-			Transactions.Add(new DepositCashAccountTransaction(@event.Amount.Amount, @event.TimestampUtc));
+			Transactions.Add(new DepositCashAccountTransaction(@event.Amount.Amount));
 		}
 
 		internal void Apply(AccountCheckDeposited @event) {
-			Transactions.Add(new DepositCheckAccountTransaction(@event.Amount.Amount, @event.TimestampUtc));
+			Transactions.Add(new DepositCheckAccountTransaction(@event.Amount.Amount, @event.DepositedOn));
 		}
 
 		internal void Apply(AccountCashWithdrawn @event) {
-			Transactions.Add(new WithdrawCashAccountTransaction(@event.Amount.Amount, @event.TimestampUtc, true));
+			Transactions.Add(new WithdrawCashAccountTransaction(@event.Amount.Amount, true));
 		}
 
 		internal void Apply(AccountCashWithdrawalRejected @event) {
-			Transactions.Add(new WithdrawCashAccountTransaction(@event.Amount.Amount, @event.TimestampUtc, false));
+			Transactions.Add(new WithdrawCashAccountTransaction(@event.Amount.Amount, false));
 		}
 
 		private void ValidateCurrencyOrThrow(Money value, string actionLabel) {
@@ -81,7 +87,7 @@
 
 			// Transaction order DOES matter
 
-			foreach (var trans in Transactions.OrderBy(t => t.TimestampUtc).ToArray()) {
+			foreach (var trans in Transactions.ToArray()) {
 				if (trans is DepositCashAccountTransaction && lastBlockingTransaction is not null) {
 					lastBlockingTransaction = null;
 				}
@@ -98,7 +104,6 @@
 		}
 
 		private decimal GetAvailableBalance() {
-			// Transaction order does NOT matter
 			return Transactions.Where(t => t.IsSuccessful).Select(t => t.ApplicableAmount).Sum();
 		}
 
@@ -164,7 +169,7 @@
 
 			ValidateCurrencyOrThrow(amount, "Check Deposit");
 
-			RaiseEvent(new AccountCheckDeposited(Id, amount));
+			RaiseEvent(new AccountCheckDeposited(Id, amount, SystemClock.Instance.GetCurrentInstant()));
 		}
 
 		public void WithdrawCash(Money amount) {

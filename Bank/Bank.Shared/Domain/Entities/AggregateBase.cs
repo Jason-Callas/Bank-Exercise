@@ -7,7 +7,13 @@
 
 		private readonly ICollection<IEvent<TId>> _uncommittedEvents = new List<IEvent<TId>>();
 
-		public TId Id { get; protected set; }
+		public AggregateBase(IEnumerable<IEvent<TId>>? events = null) {
+			if (events is not null) {
+			foreach (var @event in events) {
+				ApplyEvent(@event);
+				}
+			}
+		}
 
 		private void ApplyEvent(IEvent<TId> @event) {
 			if (!_uncommittedEvents.Any(e => Equals(e.Id, @event.Id))) {
@@ -31,6 +37,8 @@
 		public IEnumerable<IEvent<TId>> GetUncommittedEvents() {
 			return _uncommittedEvents.AsEnumerable();
 		}
+
+		public TId Id { get; protected set; }
 
 	}
 

@@ -2,9 +2,8 @@
 
 	internal abstract class AccountTransaction {
 
-		public AccountTransaction(decimal amount, DateTime timestamp, bool wasTransferred = false, bool isSuccessful = true) {
+		public AccountTransaction(decimal amount, bool wasTransferred = false, bool isSuccessful = true) {
 			Amount = amount;
-			TimestampUtc = timestamp;
 			WasTransferred = wasTransferred;
 			IsSuccessful = isSuccessful;
 		}
@@ -15,8 +14,6 @@
 		public decimal Amount { get; }
 
 		public abstract decimal ApplicableAmount { get; }
-
-		public DateTime TimestampUtc { get; }
 
 		// This is kinda horrible...really should not be using individual flags to indicate different use cases as
 		// it forces us to have to check combinations. Better approach would be to add enum flag to indicate type of

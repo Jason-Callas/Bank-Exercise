@@ -6,8 +6,6 @@
 
 		TAggregateId AggregateId { get; }
 
-		DateTime TimestampUtc { get; }
-
 	}
 
 }

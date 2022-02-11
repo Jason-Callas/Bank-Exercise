@@ -2,12 +2,14 @@
 
 	using System;
 	using FluentAssertions;
+	using FluentAssertions.NodaTime;
 	using Bank.Shared.Domain.Entities;
 	using Bank.Shared.Domain.ValueObjects;
 	using Xunit;
 	using Bank.Shared.Events;
 	using Bank.Shared.UnitTests.Fixtures;
 	using Bank.Shared.Exceptions;
+	using NodaTime;
 
 	[Trait("Type", "Unit")]
 	[Trait("Category", "Entity")]
@@ -41,7 +43,6 @@
 					options
 						.RespectingRuntimeTypes()
 						.Excluding(x => x.Id)
-						.Excluding(x => x.TimestampUtc)
 				);
 		}
 
@@ -88,7 +89,6 @@
 					options
 						.RespectingRuntimeTypes()
 						.Excluding(x => x.Id)
-						.Excluding(x => x.TimestampUtc)
 				);
 		}
 
@@ -118,7 +118,6 @@
 					options
 						.RespectingRuntimeTypes()
 						.Excluding(x => x.Id)
-						.Excluding(x => x.TimestampUtc)
 				);
 		}
 
@@ -190,7 +189,6 @@
 					options
 						.RespectingRuntimeTypes()
 						.Excluding(x => x.Id)
-						.Excluding(x => x.TimestampUtc)
 				);
 		}
 
@@ -220,7 +218,6 @@
 					options
 						.RespectingRuntimeTypes()
 						.Excluding(x => x.Id)
-						.Excluding(x => x.TimestampUtc)
 				);
 		}
 
@@ -292,7 +289,6 @@
 					options
 						.RespectingRuntimeTypes()
 						.Excluding(x => x.Id)
-						.Excluding(x => x.TimestampUtc)
 				);
 		}
 
@@ -325,7 +321,6 @@
 					options
 						.RespectingRuntimeTypes()
 						.Excluding(x => x.Id)
-						.Excluding(x => x.TimestampUtc)
 				);
 		}
 
@@ -362,7 +357,7 @@
 			var deposit = new Money(1000m, _dataFixture.DefaultCurrency);
 
 			var expectedEvents = new IEvent<Guid>[] {
-				new AccountCheckDeposited(_dataFixture.DefaultAccountId, deposit)
+				new AccountCheckDeposited(_dataFixture.DefaultAccountId, deposit, SystemClock.Instance.GetCurrentInstant())
 			};
 
 			// ** Act
@@ -376,7 +371,8 @@
 					options
 						.RespectingRuntimeTypes()
 						.Excluding(x => x.Id)
-						.Excluding(x => x.TimestampUtc)
+						// To cover the difference in "deposited on"
+						.Using<Instant>(ctx => ctx.Subject.Should().BeCloseTo(ctx.Expectation, TimeSpan.FromMilliseconds(200))).WhenTypeIs<Instant>()
 				);
 		}
 
@@ -393,8 +389,8 @@
 			var deposit2 = new Money(500m, _dataFixture.DefaultCurrency);
 
 			var expectedEvents = new IEvent<Guid>[] {
-				new AccountCheckDeposited(_dataFixture.DefaultAccountId, deposit1),
-				new AccountCheckDeposited(_dataFixture.DefaultAccountId, deposit2)
+				new AccountCheckDeposited(_dataFixture.DefaultAccountId, deposit1, SystemClock.Instance.GetCurrentInstant()),
+				new AccountCheckDeposited(_dataFixture.DefaultAccountId, deposit2, SystemClock.Instance.GetCurrentInstant())
 			};
 
 			// ** Act
@@ -409,7 +405,8 @@
 					options
 						.RespectingRuntimeTypes()
 						.Excluding(x => x.Id)
-						.Excluding(x => x.TimestampUtc)
+						// To cover the difference in "deposited on"
+						.Using<Instant>(ctx => ctx.Subject.Should().BeCloseTo(ctx.Expectation, TimeSpan.FromMilliseconds(200))).WhenTypeIs<Instant>()
 				);
 		}
 
@@ -461,7 +458,6 @@
 					options
 						.RespectingRuntimeTypes()
 						.Excluding(x => x.Id)
-						.Excluding(x => x.TimestampUtc)
 				);
 		}
 
@@ -493,7 +489,6 @@
 					options
 						.RespectingRuntimeTypes()
 						.Excluding(x => x.Id)
-						.Excluding(x => x.TimestampUtc)
 				);
 		}
 
@@ -504,7 +499,7 @@
 			// ** Arrange
 
 			var account = new Account(_dataFixture.DefaultAccountId, _dataFixture.DefaultCustomerName, _dataFixture.DefaultCurrency);
-			account.DepositCash(new Money(100m, _dataFixture.DefaultCurrency));
+			account.DepositCash(new Money(75m, _dataFixture.DefaultCurrency));
 			account.SetOverdraftLimit(new Money(100m, _dataFixture.DefaultCurrency));
 			account.ClearUncommittedEvents();
 
@@ -527,7 +522,6 @@
 					options
 						.RespectingRuntimeTypes()
 						.Excluding(x => x.Id)
-						.Excluding(x => x.TimestampUtc)
 				);
 		}
 
@@ -559,7 +553,75 @@
 					options
 						.RespectingRuntimeTypes()
 						.Excluding(x => x.Id)
-						.Excluding(x => x.TimestampUtc)
+				);
+		}
+
+		[Fact()]
+		[Trait("Class", nameof(Account))]
+		[Trait("Method", nameof(Account.WithdrawCash))]
+		public void When_CashIsWithdrawnFromAccountWhereBalanceIsNotEnoughDueToPendingCheck_Expect_RequestToFail() {
+			// ** Arrange
+
+			var account = new Account(_dataFixture.DefaultAccountId, _dataFixture.DefaultCustomerName, _dataFixture.DefaultCurrency);
+			account.SetOverdraftLimit(new Money(0m, _dataFixture.DefaultCurrency));
+			account.DepositCash(new Money(75m, _dataFixture.DefaultCurrency));
+			account.DepositCheck(new Money(75m, _dataFixture.DefaultCurrency));
+			account.ClearUncommittedEvents();
+
+			var withdrawal = new Money(100m, _dataFixture.DefaultCurrency);
+
+			var expectedEvents = new IEvent<Guid>[] {
+				new AccountCashWithdrawalRejected(_dataFixture.DefaultAccountId, withdrawal, "Account does not have sufficient funds.")
+			};
+
+			// ** Act
+
+			account.WithdrawCash(withdrawal);
+
+			// ** Assert
+
+			account.GetUncommittedEvents().Should()
+				.BeEquivalentTo(expectedEvents, options =>
+					options
+						.RespectingRuntimeTypes()
+						.Excluding(x => x.Id)
+				);
+		}
+
+		[Fact()]
+		[Trait("Class", nameof(Account))]
+		[Trait("Method", nameof(Account.WithdrawCash))]
+		public void When_CashIsWithdrawnFromAccountWithEnoughFundsDuetoClearedCheck_Expect_RequestToFail() {
+			// ** Arrange
+
+			var checkDepositedOn = SystemClock.Instance.GetCurrentInstant().Minus(Duration.FromDays(2));
+
+			var reviveEvents = new IEvent<Guid>[] {
+				new AccountCreated(_dataFixture.DefaultAccountId, _dataFixture.DefaultCustomerName, _dataFixture.DefaultCurrency),
+				new AccountCashDeposited(_dataFixture.DefaultAccountId, new Money(75m, _dataFixture.DefaultCurrency)),
+				new AccountCheckDeposited(_dataFixture.DefaultAccountId, new Money(75m, _dataFixture.DefaultCurrency), checkDepositedOn)
+			};
+
+			var account = new Account(reviveEvents);
+			account.ClearUncommittedEvents();
+
+			var withdrawal = new Money(100m, _dataFixture.DefaultCurrency);
+
+			var expectedEvents = new IEvent<Guid>[] {
+				new AccountCashWithdrawn(_dataFixture.DefaultAccountId, withdrawal)
+			};
+
+			// ** Act
+
+			account.WithdrawCash(withdrawal);
+
+			// ** Assert
+
+			account.GetUncommittedEvents().Should()
+				.BeEquivalentTo(expectedEvents, options =>
+					options
+						.RespectingRuntimeTypes()
+						.Excluding(x => x.Id)
 				);
 		}
 
