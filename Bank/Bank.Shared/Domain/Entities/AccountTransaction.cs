@@ -6,6 +6,7 @@
 			Amount = amount;
 			TimestampUtc = timestamp;
 			WasTransferred = wasTransferred;
+			IsSuccessful = isSuccessful;
 		}
 
 		// Since the transaction is created as a result of an event at the account level,

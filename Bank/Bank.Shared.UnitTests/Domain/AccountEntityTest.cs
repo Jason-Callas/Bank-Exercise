@@ -545,7 +545,7 @@
 			var withdrawal = new Money(100m, _dataFixture.DefaultCurrency);
 
 			var expectedEvents = new IEvent<Guid>[] {
-				new AccountCashWithdrawn(_dataFixture.DefaultAccountId, withdrawal)
+				new AccountCashWithdrawalRejected(_dataFixture.DefaultAccountId, withdrawal, "Account does not have sufficient funds and withdrawal exceeded overdraft limit.")
 			};
 
 			// ** Act
@@ -553,8 +553,6 @@
 			account.WithdrawCash(withdrawal);
 
 			// ** Assert
-
-			var x = account.GetUncommittedEvents();
 
 			account.GetUncommittedEvents().Should()
 				.BeEquivalentTo(expectedEvents, options =>
