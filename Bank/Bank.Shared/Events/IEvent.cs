@@ -6,6 +6,8 @@
 
 		TAggregateId AggregateId { get; }
 
+		// Seems to be need for when we write event to store
+		string EventName { get; }
 	}
 
 }

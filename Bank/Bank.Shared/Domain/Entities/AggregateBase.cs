@@ -9,8 +9,8 @@
 
 		public AggregateBase(IEnumerable<IEvent<TId>>? events = null) {
 			if (events is not null) {
-			foreach (var @event in events) {
-				ApplyEvent(@event);
+				foreach (var @event in events) {
+					ApplyEvent(@event);
 				}
 			}
 		}
