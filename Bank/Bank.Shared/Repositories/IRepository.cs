@@ -13,6 +13,8 @@ namespace Bank.Shared.Repositories {
 
 		Task<TEntity> UpdateAsync(TEntity entity);
 
+		Task DeleteAsync(TId id);
+
 	}
 
 }

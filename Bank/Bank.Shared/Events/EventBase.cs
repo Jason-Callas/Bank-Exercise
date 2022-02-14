@@ -11,9 +11,9 @@
 			AggregateId = aggregateId;
 		}
 
-		public Guid Id { get; protected set; }
+		public Guid Id { get; }
 
-		public TAggregateId AggregateId { get; private set; }
+		public TAggregateId AggregateId { get; }
 
 
 		// This property exists to work around a Fluent Assertions object graph comparison issue. In essence, the

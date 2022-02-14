@@ -1,15 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Text.Json;
-using System.Threading.Tasks;
-using Ardalis.GuardClauses;
-using Bank.Shared.Domain.Entities;
-using Bank.Shared.Events;
-using EventStore.Client;
+﻿namespace Bank.Shared.Repositories {
 
-namespace Bank.Shared.Repositories {
+	using System.Text;
+	using System.Text.Json;
+	using Ardalis.GuardClauses;
+	using Bank.Shared.Domain.Entities;
+	using Bank.Shared.Events;
+	using EventStore.Client;
 
 	/// <summary>
 	/// Implementation of IAccountRepository that reads and writes to Event Store DB.
@@ -32,9 +28,13 @@ namespace Bank.Shared.Repositories {
 		protected async Task Store(Account account) {
 			var events = account.GetUncommittedEvents();
 
-			var payload = events.Select(e => new EventData(Uuid.FromGuid(e.Id), e.EventName.ToLower(), Encoding.UTF8.GetBytes(JsonSerializer.Serialize(e)))).ToArray();
+			//var jsonPayload = events.Select(e => JsonSerializer.Serialize(e, e.GetType())).ToArray();
 
-			await _client.AppendToStreamAsync(
+			// GetType() call is needed in order to have derived properties included in serialization output
+			//     https://docs.microsoft.com/en-us/dotnet/standard/serialization/system-text-json-polymorphism
+			var payload = events.Select(e => new EventData(Uuid.FromGuid(e.Id), e.EventName.ToLower(), Encoding.UTF8.GetBytes(JsonSerializer.Serialize(e, e.GetType())))).ToArray();
+
+			var result = await _client.AppendToStreamAsync(
 				GenerateStreamName(account.Id),
 				StreamState.Any,
 				payload,
@@ -102,6 +102,13 @@ namespace Bank.Shared.Repositories {
 			await Store(entity);
 
 			return entity;
+		}
+
+		public async Task DeleteAsync(Guid id) {
+			// While Event Sourcing _normally_ does not allow deletions, it makes sense for the repository to include
+			// support for it for testing purposes. (It should also be implemented for a generic Repository pattern _in general_.)
+
+			await _client.SoftDeleteAsync(GenerateStreamName(id), StreamState.Any);
 		}
 
 	}

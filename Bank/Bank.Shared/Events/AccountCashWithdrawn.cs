@@ -10,7 +10,7 @@
 			Amount = Guard.Against.Null(amount);
 		}
 
-		public Money Amount { get; protected set; }
+		public Money Amount { get; }
 
 	}
 

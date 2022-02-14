@@ -10,7 +10,7 @@
 			Limit = Guard.Against.Null(newLimit);
 		}
 
-		public Money Limit { get; protected set; }
+		public Money Limit { get; }
 
 	}
 

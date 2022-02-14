@@ -12,9 +12,9 @@
 			DepositedOn = depositedOn;
 		}
 
-		public Money Amount { get; protected set; }
+		public Money Amount { get; }
 
-		public Instant DepositedOn { get; set; }
+		public Instant DepositedOn { get; }
 
 	}
 

@@ -11,9 +11,9 @@
 			Reason = reason;
 		}
 
-		public Money Amount { get; protected set; }
+		public Money Amount { get; }
 
-		public string? Reason { get; protected set; }
+		public string? Reason { get; }
 
 	}
 

@@ -10,9 +10,10 @@
 			Currency = Guard.Against.NullOrWhiteSpace(currency, nameof(currency)); ;
 		}
 
-		public string CustomerName { get; protected set; }
+		public string CustomerName { get; }
 
-		public string Currency { get; protected set; }
+		public string Currency { get; }
+
 	}
 
 }
