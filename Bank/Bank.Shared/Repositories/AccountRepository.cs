@@ -28,8 +28,6 @@
 		protected async Task Store(Account account) {
 			var events = account.GetUncommittedEvents();
 
-			//var jsonPayload = events.Select(e => JsonSerializer.Serialize(e, e.GetType())).ToArray();
-
 			// GetType() call is needed in order to have derived properties included in serialization output
 			//     https://docs.microsoft.com/en-us/dotnet/standard/serialization/system-text-json-polymorphism
 			var payload = events.Select(e => new EventData(Uuid.FromGuid(e.Id), e.EventName.ToLower(), Encoding.UTF8.GetBytes(JsonSerializer.Serialize(e, e.GetType())))).ToArray();
@@ -65,6 +63,8 @@
 				// Even worse is the use of "magic strings"...
 				//
 				// Does System.Text.Json have a way to deserialize to a type as a string as opposed to using Generics???
+				//
+				// This offers an option -- https://github.com/oskardudycz/EventSourcing.NetCore/blob/d94d3d9fbe1e7e4bdb42ab56b05c2890f0eda725/Sample/EventStoreDB/Simple/ECommerce.Core/Events/EventTypeMapper.cs
 				switch (@event.Event.EventType) {
 					case "accountcreated":
 						events.Add(JsonSerializer.Deserialize<AccountCreated>(jsonPayload));
