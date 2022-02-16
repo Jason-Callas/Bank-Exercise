@@ -3,10 +3,8 @@
 	internal class WithdrawCashAccountTransaction :
 		AccountTransaction {
 
-		public WithdrawCashAccountTransaction(decimal amount, bool isSuccessful, bool wasTransferred = false) : base(amount, wasTransferred, isSuccessful) {
+		public WithdrawCashAccountTransaction(decimal amount, bool isSuccessful) : base(amount, isSuccessful) {
 		}
-
-		public override decimal ApplicableAmount => Amount;
 
 	}
 

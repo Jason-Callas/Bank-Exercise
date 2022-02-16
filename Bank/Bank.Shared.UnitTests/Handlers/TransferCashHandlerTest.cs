@@ -5,6 +5,7 @@
 	using System.Threading.Tasks;
 	using Bank.Shared.Commands;
 	using Bank.Shared.Domain.Entities;
+	using Bank.Shared.Domain.ValueObjects;
 	using Bank.Shared.Exceptions;
 	using Bank.Shared.Handlers;
 	using Bank.Shared.Repositories;
@@ -15,24 +16,24 @@
 
 	[Trait("Type", "Unit")]
 	[Trait("Category", "Handler")]
-	public class DepositCashHandlerTest :
+	public class TransferCashHandlerTest :
 		IClassFixture<AccountDataFixture> {
 
 		private readonly AccountDataFixture _dataFixture;
 
-		public DepositCashHandlerTest(AccountDataFixture dataFixture) {
+		public TransferCashHandlerTest(AccountDataFixture dataFixture) {
 			_dataFixture = dataFixture ?? throw new ArgumentNullException(nameof(dataFixture));
 		}
 
 		[Fact()]
-		[Trait("Class", nameof(DepositCashHandler))]
-		[Trait("Method", nameof(DepositCashHandler.Handle))]
+		[Trait("Class", nameof(WireTransferCashHandler))]
+		[Trait("Method", nameof(WireTransferCashHandler.Handle))]
 		public async Task When_NullCommandIsPassedToHandler_Expect_ExceptionToBeThrown() {
 			// ** Arrange
 
 			var mockRepository = new Mock<IAccountRepository>();
 
-			var handler = new DepositCashHandler(mockRepository.Object);
+			var handler = new WireTransferCashHandler(mockRepository.Object);
 
 			// ** Act
 
@@ -45,16 +46,16 @@
 		}
 
 		[Fact()]
-		[Trait("Class", nameof(DepositCashHandler))]
-		[Trait("Method", nameof(DepositCashHandler.Handle))]
+		[Trait("Class", nameof(WireTransferCashHandler))]
+		[Trait("Method", nameof(WireTransferCashHandler.Handle))]
 		public async Task When_CommandWithIdThatDoesNotExistsIsPassedToHandler_Expect_ExceptionToBeThrown() {
 			// ** Arrange
 
-			var command = new DepositCash(Guid.NewGuid(), 25m, "USD");
+			var command = new WireTransferCash(Guid.NewGuid(), 25m, "USD");
 
 			var mockRepository = new Mock<IAccountRepository>();
 
-			var handler = new DepositCashHandler(mockRepository.Object);
+			var handler = new WireTransferCashHandler(mockRepository.Object);
 
 			// ** Act
 
@@ -67,14 +68,14 @@
 		}
 
 		[Fact()]
-		[Trait("Class", nameof(DepositCashHandler))]
-		[Trait("Method", nameof(DepositCashHandler.Handle))]
+		[Trait("Class", nameof(WireTransferCashHandler))]
+		[Trait("Method", nameof(WireTransferCashHandler.Handle))]
 		public async Task When_CommandWithIdThatExistsIsPassedToHandler_Expect_AccountToBeUpdated() {
 			// ** Arrange
 
 			var expectedAccount = _dataFixture.GetNewAccount();
 
-			var command = new DepositCash(Guid.NewGuid(), 325m, _dataFixture.DefaultCurrency);
+			var command = new WireTransferCash(Guid.NewGuid(), 325m, _dataFixture.DefaultCurrency);
 
 			var mockRepository = new Mock<IAccountRepository>();
 
@@ -85,7 +86,7 @@
 			mockRepository.Setup(x => x.UpdateAsync(It.IsAny<Account>()))
 				.Callback<Account>(x => updateWasCalled = true);
 
-			var handler = new DepositCashHandler(mockRepository.Object);
+			var handler = new WireTransferCashHandler(mockRepository.Object);
 
 			// ** Act
 

@@ -625,6 +625,199 @@
 				);
 		}
 
+		[Fact()]
+		[Trait("Class", nameof(Account))]
+		[Trait("Method", nameof(Account.WithdrawCash))]
+		public void When_CashIsTransferredFromAccountWithEnoughFunds_Expect_RequestToSucceed() {
+			// ** Arrange
+
+			var today = SystemClock.Instance.GetCurrentInstant().InUtc().Date;
+
+			var reviveEvents = new IEvent<Guid>[] {
+				new AccountCreated(_dataFixture.DefaultAccountId, _dataFixture.DefaultCustomerName, _dataFixture.DefaultCurrency),
+				new AccountDailyWireTransferLimitChanged(_dataFixture.DefaultAccountId, new Money(100m, _dataFixture.DefaultCurrency)),
+				new AccountCashDeposited(_dataFixture.DefaultAccountId, new Money(100m, _dataFixture.DefaultCurrency))
+			};
+
+			var account = new Account(reviveEvents);
+			account.ClearUncommittedEvents();
+
+			var transfer = new Money(75m, _dataFixture.DefaultCurrency);
+
+			var expectedEvents = new IEvent<Guid>[] {
+				new AccountCashTransferred(_dataFixture.DefaultAccountId, transfer, today)
+			};
+
+			// ** Act
+
+			account.TransferCash(transfer);
+
+			// ** Assert
+
+			account.GetUncommittedEvents().Should()
+				.BeEquivalentTo(expectedEvents, options =>
+					options
+						.RespectingRuntimeTypes()
+						.Excluding(x => x.Id)
+				);
+		}
+
+		[Fact()]
+		[Trait("Class", nameof(Account))]
+		[Trait("Method", nameof(Account.WithdrawCash))]
+		public void When_CashIsTransferredFromAccountThatDoesNotHaveEnoughFunds_Expect_RequestToFail() {
+			// ** Arrange
+
+			var reviveEvents = new IEvent<Guid>[] {
+				new AccountCreated(_dataFixture.DefaultAccountId, _dataFixture.DefaultCustomerName, _dataFixture.DefaultCurrency),
+				new AccountCashDeposited(_dataFixture.DefaultAccountId, new Money(50m, _dataFixture.DefaultCurrency))
+			};
+
+			var account = new Account(reviveEvents);
+			account.ClearUncommittedEvents();
+
+			var transfer = new Money(75m, _dataFixture.DefaultCurrency);
+
+			var expectedEvents = new IEvent<Guid>[] {
+				new AccountCashTransferRejected(_dataFixture.DefaultAccountId, transfer, "Account does not have sufficient funds.")
+			};
+
+			// ** Act
+
+			account.TransferCash(transfer);
+
+			// ** Assert
+
+			account.GetUncommittedEvents().Should()
+				.BeEquivalentTo(expectedEvents, options =>
+					options
+						.RespectingRuntimeTypes()
+						.Excluding(x => x.Id)
+				);
+		}
+
+		[Fact()]
+		[Trait("Class", nameof(Account))]
+		[Trait("Method", nameof(Account.WithdrawCash))]
+		public void When_CashIsTransferredFromAccountThatHasEnoughFundsButAmountIsMoreThanDailyLimit_Expect_RequestToFail() {
+			// ** Arrange
+
+			var dailyLimit = new Money(100m, _dataFixture.DefaultCurrency);
+
+			var reviveEvents = new IEvent<Guid>[] {
+				new AccountCreated(_dataFixture.DefaultAccountId, _dataFixture.DefaultCustomerName, _dataFixture.DefaultCurrency),
+				new AccountDailyWireTransferLimitChanged(_dataFixture.DefaultAccountId, dailyLimit),
+				new AccountCashDeposited(_dataFixture.DefaultAccountId, new Money(200m, _dataFixture.DefaultCurrency))
+			};
+
+			var account = new Account(reviveEvents);
+			account.ClearUncommittedEvents();
+
+			// Make sure the request is more than limit
+			var transfer = new Money(dailyLimit.Amount + 75m, dailyLimit.Currency);
+
+			var expectedEvents = new IEvent<Guid>[] {
+				new AccountCashTransferRejected(_dataFixture.DefaultAccountId, transfer, "Cannot transfer funds in amounts that total greater than daily limit.")
+			};
+
+			// ** Act
+
+			account.TransferCash(transfer);
+
+			// ** Assert
+
+			account.GetUncommittedEvents().Should()
+				.BeEquivalentTo(expectedEvents, options =>
+					options
+						.RespectingRuntimeTypes()
+						.Excluding(x => x.Id)
+				);
+		}
+
+		[Fact()]
+		[Trait("Class", nameof(Account))]
+		[Trait("Method", nameof(Account.WithdrawCash))]
+		public void When_CashIsTransferredFromAccountThatHasEnoughFundsButMultipleTransfersOnSameDayExceedDailyLimit_Expect_RequestToFail() {
+			// ** Arrange
+
+			var today = SystemClock.Instance.GetCurrentInstant().InUtc().Date;
+
+			var dailyLimit = new Money(100m, _dataFixture.DefaultCurrency);
+
+			var reviveEvents = new IEvent<Guid>[] {
+				new AccountCreated(_dataFixture.DefaultAccountId, _dataFixture.DefaultCustomerName, _dataFixture.DefaultCurrency),
+				new AccountDailyWireTransferLimitChanged(_dataFixture.DefaultAccountId, dailyLimit),
+				new AccountCashDeposited(_dataFixture.DefaultAccountId, new Money(200m, _dataFixture.DefaultCurrency)),
+				new AccountCashTransferred(_dataFixture.DefaultAccountId, new Money(50m, _dataFixture.DefaultCurrency), today)
+			};
+
+			var account = new Account(reviveEvents);
+			account.ClearUncommittedEvents();
+
+			// 50 (first request) + 75 (this request) > 100 (limit)
+			var transfer = new Money(75m, dailyLimit.Currency);
+
+			var expectedEvents = new IEvent<Guid>[] {
+				new AccountCashTransferRejected(_dataFixture.DefaultAccountId, transfer, "Cannot transfer funds in amounts that total greater than daily limit.")
+			};
+
+			// ** Act
+
+			account.TransferCash(transfer);
+
+			// ** Assert
+
+			account.GetUncommittedEvents().Should()
+				.BeEquivalentTo(expectedEvents, options =>
+					options
+						.RespectingRuntimeTypes()
+						.Excluding(x => x.Id)
+				);
+		}
+
+
+		[Fact()]
+		[Trait("Class", nameof(Account))]
+		[Trait("Method", nameof(Account.WithdrawCash))]
+		public void When_CashIsTransferredFromAccountThatHasEnoughFundsAndMultipleTransfersButTransfersWereOnAnotherDay_Expect_RequestToSucceed() {
+			// ** Arrange
+
+			var today = SystemClock.Instance.GetCurrentInstant().InUtc().Date;
+			var twoDaysAgo = today.Minus(Period.FromDays(2));
+
+			var dailyLimit = new Money(100m, _dataFixture.DefaultCurrency);
+
+			var reviveEvents = new IEvent<Guid>[] {
+				new AccountCreated(_dataFixture.DefaultAccountId, _dataFixture.DefaultCustomerName, _dataFixture.DefaultCurrency),
+				new AccountDailyWireTransferLimitChanged(_dataFixture.DefaultAccountId, dailyLimit),
+				new AccountCashDeposited(_dataFixture.DefaultAccountId, new Money(200m, _dataFixture.DefaultCurrency)),
+				new AccountCashTransferred(_dataFixture.DefaultAccountId, new Money(50m, _dataFixture.DefaultCurrency), twoDaysAgo)
+			};
+
+			var account = new Account(reviveEvents);
+			account.ClearUncommittedEvents();
+
+			// 50 (first request) + 75 (this request) > 100 (limit)
+			var transfer = new Money(75m, dailyLimit.Currency);
+
+			var expectedEvents = new IEvent<Guid>[] {
+				new AccountCashTransferred(_dataFixture.DefaultAccountId, transfer, today)
+			};
+
+			// ** Act
+
+			account.TransferCash(transfer);
+
+			// ** Assert
+
+			account.GetUncommittedEvents().Should()
+				.BeEquivalentTo(expectedEvents, options =>
+					options
+						.RespectingRuntimeTypes()
+						.Excluding(x => x.Id)
+				);
+		}
+
 	}
 
 }

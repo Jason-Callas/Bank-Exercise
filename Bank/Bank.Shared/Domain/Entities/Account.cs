@@ -46,32 +46,63 @@
 		}
 
 		internal void Apply(AccountOverdraftLimitChanged @event) {
+			ValidateAggregateEventOrThrow(@event);
+
 			OverdraftLimit = @event.Limit;
 		}
 
 		internal void Apply(AccountDailyWireTransferLimitChanged @event) {
+			ValidateAggregateEventOrThrow(@event);
+
 			DailyWireTransferLimit = @event.Limit;
 		}
 
 		internal void Apply(AccountCashDeposited @event) {
+			ValidateAggregateEventOrThrow(@event);
+
 			Transactions.Add(new DepositCashAccountTransaction(@event.Amount.Amount));
 		}
 
 		internal void Apply(AccountCheckDeposited @event) {
+			ValidateAggregateEventOrThrow(@event);
+
 			Transactions.Add(new DepositCheckAccountTransaction(@event.Amount.Amount, @event.DepositedOn));
 		}
 
 		internal void Apply(AccountCashWithdrawn @event) {
+			ValidateAggregateEventOrThrow(@event);
+
 			Transactions.Add(new WithdrawCashAccountTransaction(@event.Amount.Amount, true));
 		}
 
+		internal void Apply(AccountCashTransferred @event) {
+			ValidateAggregateEventOrThrow(@event);
+
+			Transactions.Add(new TransferCashAccountTransaction(@event.Amount.Amount, @event.TransferredOn, true));
+		}
+
 		internal void Apply(AccountCashWithdrawalRejected @event) {
+			ValidateAggregateEventOrThrow(@event);
+
+			Transactions.Add(new WithdrawCashAccountTransaction(@event.Amount.Amount, false));
+		}
+
+		internal void Apply(AccountCashTransferRejected @event) {
+			ValidateAggregateEventOrThrow(@event);
+
+			// Should a failed transfer _look_ like a withdrawal?? Maybe the term "withdraw" should be changed to "debit"
 			Transactions.Add(new WithdrawCashAccountTransaction(@event.Amount.Amount, false));
 		}
 
 		private void ValidateCurrencyOrThrow(Money value, string actionLabel) {
 			if (!string.Equals(value.Currency, Currency, StringComparison.OrdinalIgnoreCase)) {
 				throw new InvalidCurrencyException($"Unable to accept {actionLabel} due to currency mismatch. Account is configured for '{Currency}' but new value is '{value.Currency}'.");
+			}
+		}
+
+		private void ValidateAggregateEventOrThrow(IEvent<Guid> @event) {
+			if (@event.AggregateId != Id) {
+				throw new InvalidAccountException($"Cannot process '{@event.GetType().Name}' event. Associated aggregate id '{@event.AggregateId}' does not match entity id '{Id}'.");
 			}
 		}
 
@@ -88,23 +119,62 @@
 			// Transaction order DOES matter
 
 			foreach (var trans in Transactions.ToArray()) {
-				if (trans is DepositCashAccountTransaction && lastBlockingTransaction is not null) {
-					lastBlockingTransaction = null;
+				// If we are currently blocked then perform some checks to see if we should unblock
+				if (lastBlockingTransaction is not null && trans.IsSuccessful) {
+					if (
+						trans is DepositCashAccountTransaction ||
+						trans is DepositCheckAccountTransaction && ((DepositCheckAccountTransaction)trans).HasCleared
+						) {
+						lastBlockingTransaction = null;
+					}
 				}
 
 				// Purposely leaving the successful check separate from the one or many type checks
 				if (!trans.IsSuccessful) {
-					if (trans is WithdrawCashAccountTransaction) {
-						lastBlockingTransaction = trans;
-					}
+					lastBlockingTransaction = trans;
 				}
 			}
 
 			return (lastBlockingTransaction is not null);
 		}
 
+		private decimal GetTransferTotalOnDate(LocalDate? date = null) {
+			if (Transactions is null) {
+				return 0m;
+			}
+
+			if (!date.HasValue) {
+				// Heavens forbid NodaTime offered something as convenient as DateTime.UtcNow.Date....
+
+				date = SystemClock.Instance.GetCurrentInstant().InUtc().Date;
+			}
+
+			return Transactions
+				.OfType<TransferCashAccountTransaction>()
+				.Where(t => t.TransferredOn == date.Value && t.IsSuccessful)
+				.Select(t => t.ApplicableAmount)
+				.DefaultIfEmpty(0m)
+				.Sum();
+		}
+
+		private decimal GetTransferTotalToday() {
+			return GetTransferTotalOnDate(SystemClock.Instance.GetCurrentInstant().InUtc().Date);
+		}
+
 		private decimal GetAvailableBalance() {
-			return Transactions.Where(t => t.IsSuccessful).Select(t => t.ApplicableAmount).Sum();
+			var totalCredits = Transactions
+				.Where(t => t is DepositCashAccountTransaction || t is DepositCheckAccountTransaction)
+				.Where(t => t.IsSuccessful)
+				.Select(t => t.ApplicableAmount)
+				.Sum();
+
+			var totalDebits = Transactions
+				.Where(t => t is WithdrawCashAccountTransaction || t is TransferCashAccountTransaction)
+				.Where(t => t.IsSuccessful)
+				.Select(t => t.ApplicableAmount)
+				.Sum();
+
+			return totalCredits - totalDebits;
 		}
 
 		private DebitApproval IsDebitAllowed(decimal amount) {
@@ -120,6 +190,21 @@
 				if (availableFunds < amount) {
 					return DebitApproval.OverdraftExceeded;
 				}
+			}
+
+			return DebitApproval.Approved;
+		}
+
+		private DebitApproval IsDebitViaTransferAllowed(decimal amount) {
+			var result = IsDebitAllowed(amount);
+
+			// No need to do additional checks if already not allowed
+			if (result != DebitApproval.Approved) {
+				return result;
+			}
+
+			if (DailyWireTransferLimit.Amount < GetTransferTotalToday() + amount) {
+				return DebitApproval.DailyTransferExceeded;
 			}
 
 			return DebitApproval.Approved;
@@ -211,6 +296,46 @@
 				// **
 				// ** One solution would be a timer that performs checks but that is not feasible. Another possibility would
 				// ** would be to add another check
+			}
+		}
+
+		public void TransferCash(Money amount) {
+			Guard.Against.Null(amount, nameof(amount));
+
+			Guard.Against.Negative(amount.Amount, nameof(amount));
+			Guard.Against.Null(amount.Currency, nameof(amount.Currency));
+
+			ValidateCurrencyOrThrow(amount, "Transfer Cash");
+
+			var approval = IsDebitViaTransferAllowed(amount.Amount);
+
+			if (approval == DebitApproval.Approved) {
+				var today = SystemClock.Instance.GetCurrentInstant().InUtc().Date;
+
+				// ** Let transfer happen
+				RaiseEvent(new AccountCashTransferred(Id, amount, today));
+			}
+			else {
+				// ** Do NOT let transfer happen
+
+				var reason = default(string);
+
+				switch (approval) {
+					case DebitApproval.AccountBlocked:
+						reason = "Account is currently blocked from any debits.";
+						break;
+					case DebitApproval.InsufficientFunds:
+						reason = "Account does not have sufficient funds.";
+						break;
+					case DebitApproval.OverdraftExceeded:
+						reason = "Account does not have sufficient funds and debit exceeded overdraft limit.";
+						break;
+					case DebitApproval.DailyTransferExceeded:
+						reason = "Cannot transfer funds in amounts that total greater than daily limit.";
+						break;
+				}
+
+				RaiseEvent(new AccountCashTransferRejected(Id, amount, reason));
 			}
 		}
 

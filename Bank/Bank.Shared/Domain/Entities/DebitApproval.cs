@@ -8,7 +8,9 @@
 
 		InsufficientFunds,
 
-		OverdraftExceeded
+		OverdraftExceeded,
+
+		DailyTransferExceeded
 
 	}
 

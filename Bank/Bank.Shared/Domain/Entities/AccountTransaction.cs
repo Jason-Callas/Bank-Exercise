@@ -2,24 +2,21 @@
 
 	internal abstract class AccountTransaction {
 
-		public AccountTransaction(decimal amount, bool wasTransferred = false, bool isSuccessful = true) {
+		public AccountTransaction(decimal amount, bool isSuccessful = true) {
 			Amount = amount;
-			WasTransferred = wasTransferred;
 			IsSuccessful = isSuccessful;
 		}
 
 		// Since the transaction is created as a result of an event at the account level,
-		// and is immutable, I do NOT think we actually need an Id
+		// and is immutable, I do not THINK we actually need an Id
 
 		public decimal Amount { get; }
 
-		public abstract decimal ApplicableAmount { get; }
-
-		// This is kinda horrible...really should not be using individual flags to indicate different use cases as
-		// it forces us to have to check combinations. Better approach would be to add enum flag to indicate type of
-		// transaction.
-
-		public bool WasTransferred { get; }
+		public virtual decimal ApplicableAmount {
+			get {
+				return Amount;
+			}
+		}
 
 		public bool IsSuccessful { get; }
 
