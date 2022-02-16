@@ -275,7 +275,7 @@
 			var deposit = new Money(1000m, _dataFixture.DefaultCurrency);
 
 			var expectedEvents = new IEvent<Guid>[] {
-				new AccountCashDeposited(_dataFixture.DefaultAccountId, deposit)
+				new AccountCashDeposited(_dataFixture.DefaultAccountId, deposit, SystemClock.Instance.GetCurrentInstant())
 			};
 
 			// ** Act
@@ -289,6 +289,7 @@
 					options
 						.RespectingRuntimeTypes()
 						.Excluding(x => x.Id)
+						.Using<Instant>(ctx => ctx.Subject.Should().BeCloseTo(ctx.Expectation, Duration.FromMilliseconds(250))).WhenTypeIs<Instant>()
 				);
 		}
 
@@ -305,8 +306,8 @@
 			var deposit2 = new Money(500m, _dataFixture.DefaultCurrency);
 
 			var expectedEvents = new IEvent<Guid>[] {
-				new AccountCashDeposited(_dataFixture.DefaultAccountId, deposit1),
-				new AccountCashDeposited(_dataFixture.DefaultAccountId, deposit2)
+				new AccountCashDeposited(_dataFixture.DefaultAccountId, deposit1, SystemClock.Instance.GetCurrentInstant()),
+				new AccountCashDeposited(_dataFixture.DefaultAccountId, deposit2, SystemClock.Instance.GetCurrentInstant())
 			};
 
 			// ** Act
@@ -321,6 +322,7 @@
 					options
 						.RespectingRuntimeTypes()
 						.Excluding(x => x.Id)
+						.Using<Instant>(ctx => ctx.Subject.Should().BeCloseTo(ctx.Expectation, Duration.FromMilliseconds(250))).WhenTypeIs<Instant>()
 				);
 		}
 
@@ -444,7 +446,7 @@
 			var withdrawal = new Money(100m, _dataFixture.DefaultCurrency);
 
 			var expectedEvents = new IEvent<Guid>[] {
-				new AccountCashWithdrawalRejected(_dataFixture.DefaultAccountId, withdrawal, "Account does not have sufficient funds.")
+				new AccountCashWithdrawalRejected(_dataFixture.DefaultAccountId, withdrawal, SystemClock.Instance.GetCurrentInstant(), "Account does not have sufficient funds.")
 			};
 
 			// ** Act
@@ -458,6 +460,7 @@
 					options
 						.RespectingRuntimeTypes()
 						.Excluding(x => x.Id)
+						.Using<Instant>(ctx => ctx.Subject.Should().BeCloseTo(ctx.Expectation, Duration.FromMilliseconds(250))).WhenTypeIs<Instant>()
 				);
 		}
 
@@ -475,7 +478,7 @@
 			var withdrawal = new Money(100m, _dataFixture.DefaultCurrency);
 
 			var expectedEvents = new IEvent<Guid>[] {
-				new AccountCashWithdrawn(_dataFixture.DefaultAccountId, withdrawal)
+				new AccountCashWithdrawn(_dataFixture.DefaultAccountId, withdrawal, SystemClock.Instance.GetCurrentInstant())
 			};
 
 			// ** Act
@@ -489,6 +492,7 @@
 					options
 						.RespectingRuntimeTypes()
 						.Excluding(x => x.Id)
+						.Using<Instant>(ctx => ctx.Subject.Should().BeCloseTo(ctx.Expectation, Duration.FromMilliseconds(250))).WhenTypeIs<Instant>()
 				);
 		}
 
@@ -506,7 +510,7 @@
 			var withdrawal = new Money(100m, _dataFixture.DefaultCurrency);
 
 			var expectedEvents = new IEvent<Guid>[] {
-				new AccountCashWithdrawn(_dataFixture.DefaultAccountId, withdrawal)
+				new AccountCashWithdrawn(_dataFixture.DefaultAccountId, withdrawal, SystemClock.Instance.GetCurrentInstant())
 			};
 
 			// ** Act
@@ -522,6 +526,7 @@
 					options
 						.RespectingRuntimeTypes()
 						.Excluding(x => x.Id)
+						.Using<Instant>(ctx => ctx.Subject.Should().BeCloseTo(ctx.Expectation, Duration.FromMilliseconds(250))).WhenTypeIs<Instant>()
 				);
 		}
 
@@ -539,7 +544,7 @@
 			var withdrawal = new Money(100m, _dataFixture.DefaultCurrency);
 
 			var expectedEvents = new IEvent<Guid>[] {
-				new AccountCashWithdrawalRejected(_dataFixture.DefaultAccountId, withdrawal, "Account does not have sufficient funds and withdrawal exceeded overdraft limit.")
+				new AccountCashWithdrawalRejected(_dataFixture.DefaultAccountId, withdrawal, SystemClock.Instance.GetCurrentInstant(), "Account does not have sufficient funds and withdrawal exceeded overdraft limit.")
 			};
 
 			// ** Act
@@ -553,6 +558,7 @@
 					options
 						.RespectingRuntimeTypes()
 						.Excluding(x => x.Id)
+						.Using<Instant>(ctx => ctx.Subject.Should().BeCloseTo(ctx.Expectation, Duration.FromMilliseconds(250))).WhenTypeIs<Instant>()
 				);
 		}
 
@@ -571,7 +577,7 @@
 			var withdrawal = new Money(100m, _dataFixture.DefaultCurrency);
 
 			var expectedEvents = new IEvent<Guid>[] {
-				new AccountCashWithdrawalRejected(_dataFixture.DefaultAccountId, withdrawal, "Account does not have sufficient funds.")
+				new AccountCashWithdrawalRejected(_dataFixture.DefaultAccountId, withdrawal,SystemClock.Instance.GetCurrentInstant(), "Account does not have sufficient funds.")
 			};
 
 			// ** Act
@@ -585,6 +591,7 @@
 					options
 						.RespectingRuntimeTypes()
 						.Excluding(x => x.Id)
+						.Using<Instant>(ctx => ctx.Subject.Should().BeCloseTo(ctx.Expectation, Duration.FromMilliseconds(250))).WhenTypeIs<Instant>()
 				);
 		}
 
@@ -598,8 +605,8 @@
 
 			var reviveEvents = new IEvent<Guid>[] {
 				new AccountCreated(_dataFixture.DefaultAccountId, _dataFixture.DefaultCustomerName, _dataFixture.DefaultCurrency),
-				new AccountCashDeposited(_dataFixture.DefaultAccountId, new Money(75m, _dataFixture.DefaultCurrency)),
-				new AccountCheckDeposited(_dataFixture.DefaultAccountId, new Money(75m, _dataFixture.DefaultCurrency), checkDepositedOn)
+				new AccountCheckDeposited(_dataFixture.DefaultAccountId, new Money(75m, _dataFixture.DefaultCurrency), checkDepositedOn),
+				new AccountCashDeposited(_dataFixture.DefaultAccountId, new Money(75m, _dataFixture.DefaultCurrency), SystemClock.Instance.GetCurrentInstant())
 			};
 
 			var account = new Account(reviveEvents);
@@ -608,7 +615,7 @@
 			var withdrawal = new Money(100m, _dataFixture.DefaultCurrency);
 
 			var expectedEvents = new IEvent<Guid>[] {
-				new AccountCashWithdrawn(_dataFixture.DefaultAccountId, withdrawal)
+				new AccountCashWithdrawn(_dataFixture.DefaultAccountId, withdrawal, SystemClock.Instance.GetCurrentInstant())
 			};
 
 			// ** Act
@@ -622,6 +629,7 @@
 					options
 						.RespectingRuntimeTypes()
 						.Excluding(x => x.Id)
+						.Using<Instant>(ctx => ctx.Subject.Should().BeCloseTo(ctx.Expectation, Duration.FromMilliseconds(250))).WhenTypeIs<Instant>()
 				);
 		}
 
@@ -631,12 +639,10 @@
 		public void When_CashIsTransferredFromAccountWithEnoughFunds_Expect_RequestToSucceed() {
 			// ** Arrange
 
-			var today = SystemClock.Instance.GetCurrentInstant().InUtc().Date;
-
 			var reviveEvents = new IEvent<Guid>[] {
 				new AccountCreated(_dataFixture.DefaultAccountId, _dataFixture.DefaultCustomerName, _dataFixture.DefaultCurrency),
 				new AccountDailyWireTransferLimitChanged(_dataFixture.DefaultAccountId, new Money(100m, _dataFixture.DefaultCurrency)),
-				new AccountCashDeposited(_dataFixture.DefaultAccountId, new Money(100m, _dataFixture.DefaultCurrency))
+				new AccountCashDeposited(_dataFixture.DefaultAccountId, new Money(100m, _dataFixture.DefaultCurrency), SystemClock.Instance.GetCurrentInstant())
 			};
 
 			var account = new Account(reviveEvents);
@@ -645,7 +651,7 @@
 			var transfer = new Money(75m, _dataFixture.DefaultCurrency);
 
 			var expectedEvents = new IEvent<Guid>[] {
-				new AccountCashTransferred(_dataFixture.DefaultAccountId, transfer, today)
+				new AccountCashTransferred(_dataFixture.DefaultAccountId, transfer, SystemClock.Instance.GetCurrentInstant())
 			};
 
 			// ** Act
@@ -659,6 +665,7 @@
 					options
 						.RespectingRuntimeTypes()
 						.Excluding(x => x.Id)
+						.Using<Instant>(ctx => ctx.Subject.Should().BeCloseTo(ctx.Expectation, Duration.FromMilliseconds(250))).WhenTypeIs<Instant>()
 				);
 		}
 
@@ -670,7 +677,7 @@
 
 			var reviveEvents = new IEvent<Guid>[] {
 				new AccountCreated(_dataFixture.DefaultAccountId, _dataFixture.DefaultCustomerName, _dataFixture.DefaultCurrency),
-				new AccountCashDeposited(_dataFixture.DefaultAccountId, new Money(50m, _dataFixture.DefaultCurrency))
+				new AccountCashDeposited(_dataFixture.DefaultAccountId, new Money(50m, _dataFixture.DefaultCurrency), SystemClock.Instance.GetCurrentInstant())
 			};
 
 			var account = new Account(reviveEvents);
@@ -679,7 +686,7 @@
 			var transfer = new Money(75m, _dataFixture.DefaultCurrency);
 
 			var expectedEvents = new IEvent<Guid>[] {
-				new AccountCashTransferRejected(_dataFixture.DefaultAccountId, transfer, "Account does not have sufficient funds.")
+				new AccountCashTransferRejected(_dataFixture.DefaultAccountId, transfer, SystemClock.Instance.GetCurrentInstant(), "Account does not have sufficient funds.")
 			};
 
 			// ** Act
@@ -693,6 +700,7 @@
 					options
 						.RespectingRuntimeTypes()
 						.Excluding(x => x.Id)
+						.Using<Instant>(ctx => ctx.Subject.Should().BeCloseTo(ctx.Expectation, Duration.FromMilliseconds(250))).WhenTypeIs<Instant>()
 				);
 		}
 
@@ -707,7 +715,7 @@
 			var reviveEvents = new IEvent<Guid>[] {
 				new AccountCreated(_dataFixture.DefaultAccountId, _dataFixture.DefaultCustomerName, _dataFixture.DefaultCurrency),
 				new AccountDailyWireTransferLimitChanged(_dataFixture.DefaultAccountId, dailyLimit),
-				new AccountCashDeposited(_dataFixture.DefaultAccountId, new Money(200m, _dataFixture.DefaultCurrency))
+				new AccountCashDeposited(_dataFixture.DefaultAccountId, new Money(200m, _dataFixture.DefaultCurrency), SystemClock.Instance.GetCurrentInstant())
 			};
 
 			var account = new Account(reviveEvents);
@@ -717,7 +725,7 @@
 			var transfer = new Money(dailyLimit.Amount + 75m, dailyLimit.Currency);
 
 			var expectedEvents = new IEvent<Guid>[] {
-				new AccountCashTransferRejected(_dataFixture.DefaultAccountId, transfer, "Cannot transfer funds in amounts that total greater than daily limit.")
+				new AccountCashTransferRejected(_dataFixture.DefaultAccountId, transfer, SystemClock.Instance.GetCurrentInstant(), "Cannot transfer funds in amounts that total greater than daily limit.")
 			};
 
 			// ** Act
@@ -731,6 +739,7 @@
 					options
 						.RespectingRuntimeTypes()
 						.Excluding(x => x.Id)
+						.Using<Instant>(ctx => ctx.Subject.Should().BeCloseTo(ctx.Expectation, Duration.FromMilliseconds(250))).WhenTypeIs<Instant>()
 				);
 		}
 
@@ -740,15 +749,13 @@
 		public void When_CashIsTransferredFromAccountThatHasEnoughFundsButMultipleTransfersOnSameDayExceedDailyLimit_Expect_RequestToFail() {
 			// ** Arrange
 
-			var today = SystemClock.Instance.GetCurrentInstant().InUtc().Date;
-
 			var dailyLimit = new Money(100m, _dataFixture.DefaultCurrency);
 
 			var reviveEvents = new IEvent<Guid>[] {
 				new AccountCreated(_dataFixture.DefaultAccountId, _dataFixture.DefaultCustomerName, _dataFixture.DefaultCurrency),
 				new AccountDailyWireTransferLimitChanged(_dataFixture.DefaultAccountId, dailyLimit),
-				new AccountCashDeposited(_dataFixture.DefaultAccountId, new Money(200m, _dataFixture.DefaultCurrency)),
-				new AccountCashTransferred(_dataFixture.DefaultAccountId, new Money(50m, _dataFixture.DefaultCurrency), today)
+				new AccountCashDeposited(_dataFixture.DefaultAccountId, new Money(200m, _dataFixture.DefaultCurrency), SystemClock.Instance.GetCurrentInstant()),
+				new AccountCashTransferred(_dataFixture.DefaultAccountId, new Money(50m, _dataFixture.DefaultCurrency), SystemClock.Instance.GetCurrentInstant())
 			};
 
 			var account = new Account(reviveEvents);
@@ -758,7 +765,7 @@
 			var transfer = new Money(75m, dailyLimit.Currency);
 
 			var expectedEvents = new IEvent<Guid>[] {
-				new AccountCashTransferRejected(_dataFixture.DefaultAccountId, transfer, "Cannot transfer funds in amounts that total greater than daily limit.")
+				new AccountCashTransferRejected(_dataFixture.DefaultAccountId, transfer, SystemClock.Instance.GetCurrentInstant(), "Cannot transfer funds in amounts that total greater than daily limit.")
 			};
 
 			// ** Act
@@ -772,6 +779,7 @@
 					options
 						.RespectingRuntimeTypes()
 						.Excluding(x => x.Id)
+						.Using<Instant>(ctx => ctx.Subject.Should().BeCloseTo(ctx.Expectation, Duration.FromMilliseconds(250))).WhenTypeIs<Instant>()
 				);
 		}
 
@@ -782,15 +790,15 @@
 		public void When_CashIsTransferredFromAccountThatHasEnoughFundsAndMultipleTransfersButTransfersWereOnAnotherDay_Expect_RequestToSucceed() {
 			// ** Arrange
 
-			var today = SystemClock.Instance.GetCurrentInstant().InUtc().Date;
-			var twoDaysAgo = today.Minus(Period.FromDays(2));
+			var now = SystemClock.Instance.GetCurrentInstant();
+			var twoDaysAgo = now.Minus(Duration.FromDays(2));
 
 			var dailyLimit = new Money(100m, _dataFixture.DefaultCurrency);
 
 			var reviveEvents = new IEvent<Guid>[] {
 				new AccountCreated(_dataFixture.DefaultAccountId, _dataFixture.DefaultCustomerName, _dataFixture.DefaultCurrency),
 				new AccountDailyWireTransferLimitChanged(_dataFixture.DefaultAccountId, dailyLimit),
-				new AccountCashDeposited(_dataFixture.DefaultAccountId, new Money(200m, _dataFixture.DefaultCurrency)),
+				new AccountCashDeposited(_dataFixture.DefaultAccountId, new Money(200m, _dataFixture.DefaultCurrency), SystemClock.Instance.GetCurrentInstant()),
 				new AccountCashTransferred(_dataFixture.DefaultAccountId, new Money(50m, _dataFixture.DefaultCurrency), twoDaysAgo)
 			};
 
@@ -801,7 +809,7 @@
 			var transfer = new Money(75m, dailyLimit.Currency);
 
 			var expectedEvents = new IEvent<Guid>[] {
-				new AccountCashTransferred(_dataFixture.DefaultAccountId, transfer, today)
+				new AccountCashTransferred(_dataFixture.DefaultAccountId, transfer, now)
 			};
 
 			// ** Act
@@ -815,6 +823,7 @@
 					options
 						.RespectingRuntimeTypes()
 						.Excluding(x => x.Id)
+						.Using<Instant>(ctx => ctx.Subject.Should().BeCloseTo(ctx.Expectation, Duration.FromMilliseconds(250))).WhenTypeIs<Instant>()
 				);
 		}
 

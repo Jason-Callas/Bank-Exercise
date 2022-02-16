@@ -1,15 +1,12 @@
-﻿using NodaTime;
+﻿namespace Bank.Shared.Domain.Entities {
 
-namespace Bank.Shared.Domain.Entities {
+	using NodaTime;
 
 	internal class TransferCashAccountTransaction :
-		AccountTransaction {
+		DebitAccountTransaction {
 
-		public TransferCashAccountTransaction(decimal amount, LocalDate transferredOn, bool isSuccessful) : base(amount, isSuccessful) {
-			TransferredOn = transferredOn;
+		public TransferCashAccountTransaction(decimal amount, Instant when, bool isSuccessful) : base(amount, when, isSuccessful) {
 		}
-
-		public LocalDate TransferredOn { get; }
 
 	}
 

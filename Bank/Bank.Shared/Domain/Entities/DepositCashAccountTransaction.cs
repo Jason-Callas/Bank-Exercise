@@ -1,9 +1,11 @@
 ﻿namespace Bank.Shared.Domain.Entities {
 
-	internal class DepositCashAccountTransaction :
-		AccountTransaction {
+	using NodaTime;
 
-		public DepositCashAccountTransaction(decimal amount) : base(amount, isSuccessful: true) {
+	internal class DepositCashAccountTransaction :
+		CreditAccountTransaction {
+
+		public DepositCashAccountTransaction(decimal amount, Instant when) : base(amount, when, isSuccessful: true) {
 		}
 
 	}

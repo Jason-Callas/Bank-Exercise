@@ -2,11 +2,12 @@
 
 	using Ardalis.GuardClauses;
 	using Bank.Shared.Domain.ValueObjects;
+	using NodaTime;
 
 	public class AccountCashWithdrawn :
-		EventBase<Guid> {
+		AccountTransaction {
 
-		public AccountCashWithdrawn(Guid aggregateId, Money amount) : base(aggregateId) {
+		public AccountCashWithdrawn(Guid accountId, Money amount, Instant when) : base(accountId, when) {
 			Amount = Guard.Against.Null(amount);
 		}
 

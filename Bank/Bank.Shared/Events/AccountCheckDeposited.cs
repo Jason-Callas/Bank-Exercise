@@ -5,16 +5,13 @@
 	using NodaTime;
 
 	public class AccountCheckDeposited :
-		EventBase<Guid> {
+		AccountTransaction {
 
-		public AccountCheckDeposited(Guid aggregateId, Money amount, Instant depositedOn) : base(aggregateId) {
+		public AccountCheckDeposited(Guid accountId, Money amount, Instant when) : base(accountId, when) {
 			Amount = Guard.Against.Null(amount);
-			DepositedOn = depositedOn;
 		}
 
 		public Money Amount { get; }
-
-		public Instant DepositedOn { get; }
 
 	}
 

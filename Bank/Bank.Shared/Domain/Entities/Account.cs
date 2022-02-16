@@ -60,38 +60,38 @@
 		internal void Apply(AccountCashDeposited @event) {
 			ValidateAggregateEventOrThrow(@event);
 
-			Transactions.Add(new DepositCashAccountTransaction(@event.Amount.Amount));
+			Transactions.Add(new DepositCashAccountTransaction(@event.Amount.Amount, @event.When));
 		}
 
 		internal void Apply(AccountCheckDeposited @event) {
 			ValidateAggregateEventOrThrow(@event);
 
-			Transactions.Add(new DepositCheckAccountTransaction(@event.Amount.Amount, @event.DepositedOn));
+			Transactions.Add(new DepositCheckAccountTransaction(@event.Amount.Amount, @event.When));
 		}
 
 		internal void Apply(AccountCashWithdrawn @event) {
 			ValidateAggregateEventOrThrow(@event);
 
-			Transactions.Add(new WithdrawCashAccountTransaction(@event.Amount.Amount, true));
+			Transactions.Add(new WithdrawCashAccountTransaction(@event.Amount.Amount, @event.When, true));
 		}
 
 		internal void Apply(AccountCashTransferred @event) {
 			ValidateAggregateEventOrThrow(@event);
 
-			Transactions.Add(new TransferCashAccountTransaction(@event.Amount.Amount, @event.TransferredOn, true));
+			Transactions.Add(new TransferCashAccountTransaction(@event.Amount.Amount, @event.When, true));
 		}
 
 		internal void Apply(AccountCashWithdrawalRejected @event) {
 			ValidateAggregateEventOrThrow(@event);
 
-			Transactions.Add(new WithdrawCashAccountTransaction(@event.Amount.Amount, false));
+			Transactions.Add(new WithdrawCashAccountTransaction(@event.Amount.Amount, @event.When, false));
 		}
 
 		internal void Apply(AccountCashTransferRejected @event) {
 			ValidateAggregateEventOrThrow(@event);
 
 			// Should a failed transfer _look_ like a withdrawal?? Maybe the term "withdraw" should be changed to "debit"
-			Transactions.Add(new WithdrawCashAccountTransaction(@event.Amount.Amount, false));
+			Transactions.Add(new TransferCashAccountTransaction(@event.Amount.Amount, @event.When, false));
 		}
 
 		private void ValidateCurrencyOrThrow(Money value, string actionLabel) {
@@ -146,12 +146,13 @@
 			if (!date.HasValue) {
 				// Heavens forbid NodaTime offered something as convenient as DateTime.UtcNow.Date....
 
-				date = SystemClock.Instance.GetCurrentInstant().InUtc().Date;
+				var today = SystemClock.Instance.GetCurrentInstant().InUtc().Date;
+				date = today;
 			}
 
 			return Transactions
 				.OfType<TransferCashAccountTransaction>()
-				.Where(t => t.TransferredOn == date.Value && t.IsSuccessful)
+				.Where(t => t.When.InUtc().Date == date.Value && t.IsSuccessful)
 				.Select(t => t.ApplicableAmount)
 				.DefaultIfEmpty(0m)
 				.Sum();
@@ -163,13 +164,13 @@
 
 		private decimal GetAvailableBalance() {
 			var totalCredits = Transactions
-				.Where(t => t is DepositCashAccountTransaction || t is DepositCheckAccountTransaction)
+				.OfType<CreditAccountTransaction>()
 				.Where(t => t.IsSuccessful)
 				.Select(t => t.ApplicableAmount)
 				.Sum();
 
 			var totalDebits = Transactions
-				.Where(t => t is WithdrawCashAccountTransaction || t is TransferCashAccountTransaction)
+				.OfType<DebitAccountTransaction>()
 				.Where(t => t.IsSuccessful)
 				.Select(t => t.ApplicableAmount)
 				.Sum();
@@ -243,7 +244,7 @@
 
 			ValidateCurrencyOrThrow(amount, "Cash Deposit");
 
-			RaiseEvent(new AccountCashDeposited(Id, amount));
+			RaiseEvent(new AccountCashDeposited(Id, amount, SystemClock.Instance.GetCurrentInstant()));
 		}
 
 		public void DepositCheck(Money amount) {
@@ -266,10 +267,11 @@
 			ValidateCurrencyOrThrow(amount, "Cash Withdrawl");
 
 			var approval = IsDebitAllowed(amount.Amount);
+			var now = SystemClock.Instance.GetCurrentInstant();
 
 			if (approval == DebitApproval.Approved) {
 				// ** Let withdrawal happen
-				RaiseEvent(new AccountCashWithdrawn(Id, amount));
+				RaiseEvent(new AccountCashWithdrawn(Id, amount, now));
 			}
 			else {
 				// ** Do NOT let withdrawal happen
@@ -288,7 +290,7 @@
 						break;
 				}
 
-				RaiseEvent(new AccountCashWithdrawalRejected(Id, amount, reason));
+				RaiseEvent(new AccountCashWithdrawalRejected(Id, amount, now, reason));
 
 				// ** An argument can be made that there should **also* be an event to "block" the account. However, that _could_
 				// ** imply that there _then_ needs to be an event that "unblocks" it. While that is easy to do if a **cash** deposit
@@ -308,12 +310,11 @@
 			ValidateCurrencyOrThrow(amount, "Transfer Cash");
 
 			var approval = IsDebitViaTransferAllowed(amount.Amount);
+			var now = SystemClock.Instance.GetCurrentInstant();
 
 			if (approval == DebitApproval.Approved) {
-				var today = SystemClock.Instance.GetCurrentInstant().InUtc().Date;
-
 				// ** Let transfer happen
-				RaiseEvent(new AccountCashTransferred(Id, amount, today));
+				RaiseEvent(new AccountCashTransferred(Id, amount, now));
 			}
 			else {
 				// ** Do NOT let transfer happen
@@ -335,7 +336,7 @@
 						break;
 				}
 
-				RaiseEvent(new AccountCashTransferRejected(Id, amount, reason));
+				RaiseEvent(new AccountCashTransferRejected(Id, amount, now, reason));
 			}
 		}
 

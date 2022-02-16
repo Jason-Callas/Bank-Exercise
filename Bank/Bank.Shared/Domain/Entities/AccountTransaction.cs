@@ -1,9 +1,12 @@
 ﻿namespace Bank.Shared.Domain.Entities {
 
+	using NodaTime;
+
 	internal abstract class AccountTransaction {
 
-		public AccountTransaction(decimal amount, bool isSuccessful = true) {
+		public AccountTransaction(decimal amount, Instant when, bool isSuccessful = true) {
 			Amount = amount;
+			When = when;
 			IsSuccessful = isSuccessful;
 		}
 
@@ -17,6 +20,8 @@
 				return Amount;
 			}
 		}
+
+		public Instant When { get; }
 
 		public bool IsSuccessful { get; }
 

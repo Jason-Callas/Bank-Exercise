@@ -2,11 +2,12 @@
 
 	using Ardalis.GuardClauses;
 	using Bank.Shared.Domain.ValueObjects;
+	using NodaTime;
 
 	public class AccountCashTransferRejected :
-		EventBase<Guid> {
+		AccountTransaction {
 
-		public AccountCashTransferRejected(Guid aggregateId, Money amount, string? reason = null) : base(aggregateId) {
+		public AccountCashTransferRejected(Guid accountId, Money amount, Instant when, string? reason = null) : base(accountId, when) {
 			Amount = Guard.Against.Null(amount);
 			Reason = reason;
 		}
