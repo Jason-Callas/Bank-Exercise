@@ -601,7 +601,7 @@
 		public void When_CashIsWithdrawnFromAccountWithEnoughFundsDuetoClearedCheck_Expect_RequestToFail() {
 			// ** Arrange
 
-			var checkDepositedOn = SystemClock.Instance.GetCurrentInstant().Minus(Duration.FromDays(2));
+			var checkDepositedOn = SystemClock.Instance.GetCurrentInstant().Minus(Duration.FromDays(3));
 
 			var reviveEvents = new IEvent<Guid>[] {
 				new AccountCreated(_dataFixture.DefaultAccountId, _dataFixture.DefaultCustomerName, _dataFixture.DefaultCurrency),
