@@ -179,7 +179,9 @@
 		}
 
 		private DebitApproval IsDebitAllowed(decimal amount) {
-			// ** Need to check/calculate if Blocked
+			if (IsAccountBlocked()) {
+				return DebitApproval.AccountBlocked;
+			}
 
 			var availableBalance = GetAvailableBalance();
 			if (availableBalance < amount) {
@@ -280,7 +282,7 @@
 
 				switch (approval) {
 					case DebitApproval.AccountBlocked:
-						reason = "Account is currently blocked from any withdrawals.";
+						reason = "Account is currently blocked from any debits.";
 						break;
 					case DebitApproval.InsufficientFunds:
 						reason = "Account does not have sufficient funds.";

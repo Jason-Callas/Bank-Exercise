@@ -22,6 +22,8 @@
 			_dataFixture = dataFixture ?? throw new ArgumentNullException(nameof(dataFixture));
 		}
 
+		// ** Account Creation ********************************************************************************
+
 		[Fact()]
 		[Trait("Class", nameof(Account))]
 		[Trait("Method", "ctor")]
@@ -62,6 +64,8 @@
 			act.Should()
 				.Throw<ArgumentException>();
 		}
+
+		// ** Overdraft Limit ********************************************************************************
 
 		[Fact()]
 		[Trait("Class", nameof(Account))]
@@ -163,6 +167,8 @@
 				.Throw<InvalidCurrencyException>();
 		}
 
+		// ** Wire Transfer Limit ********************************************************************************
+
 		[Fact()]
 		[Trait("Class", nameof(Account))]
 		[Trait("Method", nameof(Account.SetDailyWireTransferLimit))]
@@ -263,6 +269,8 @@
 				.Throw<InvalidCurrencyException>();
 		}
 
+		// ** Cash Deposit ********************************************************************************
+
 		[Fact()]
 		[Trait("Class", nameof(Account))]
 		[Trait("Method", nameof(Account.DepositCash))]
@@ -346,6 +354,8 @@
 			act.Should()
 				.Throw<InvalidCurrencyException>();
 		}
+
+		// ** Check Deposit ********************************************************************************
 
 		[Fact()]
 		[Trait("Class", nameof(Account))]
@@ -432,6 +442,8 @@
 			act.Should()
 				.Throw<InvalidCurrencyException>();
 		}
+
+		// ** Cash Withdrawal ********************************************************************************
 
 		[Fact()]
 		[Trait("Class", nameof(Account))]
@@ -636,6 +648,49 @@
 		[Fact()]
 		[Trait("Class", nameof(Account))]
 		[Trait("Method", nameof(Account.WithdrawCash))]
+		public void When_CashIsWithdrawnFromBlockedAccount_Expect_RequestToFail() {
+			// ** Arrange
+
+			var checkDepositedOn = SystemClock.Instance.GetCurrentInstant().Minus(Duration.FromDays(3));
+
+			var depositAmount = 75m;
+
+			var reviveEvents = new IEvent<Guid>[] {
+				new AccountCreated(_dataFixture.DefaultAccountId, _dataFixture.DefaultCustomerName, _dataFixture.DefaultCurrency),
+				new AccountCashDeposited(_dataFixture.DefaultAccountId, new Money(depositAmount, _dataFixture.DefaultCurrency), SystemClock.Instance.GetCurrentInstant()),
+				// Trigger blocking
+				new AccountCashWithdrawalRejected(_dataFixture.DefaultAccountId, new Money(depositAmount + 25m, _dataFixture.DefaultCurrency), SystemClock.Instance.GetCurrentInstant())
+			};
+
+			var account = new Account(reviveEvents);
+			account.ClearUncommittedEvents();
+
+			var withdrawal = new Money(depositAmount - 25m, _dataFixture.DefaultCurrency);
+
+			var expectedEvents = new IEvent<Guid>[] {
+				new AccountCashWithdrawalRejected(_dataFixture.DefaultAccountId, withdrawal, SystemClock.Instance.GetCurrentInstant(), "Account is currently blocked from any debits.")
+			};
+
+			// ** Act
+
+			account.WithdrawCash(withdrawal);
+
+			// ** Assert
+
+			account.GetUncommittedEvents().Should()
+				.BeEquivalentTo(expectedEvents, options =>
+					options
+						.RespectingRuntimeTypes()
+						.Excluding(x => x.Id)
+						.Using<Instant>(ctx => ctx.Subject.Should().BeCloseTo(ctx.Expectation, Duration.FromMilliseconds(250))).WhenTypeIs<Instant>()
+				);
+		}
+
+		// ** Cash Transfer ********************************************************************************
+
+		[Fact()]
+		[Trait("Class", nameof(Account))]
+		[Trait("Method", nameof(Account.TransferCash))]
 		public void When_CashIsTransferredFromAccountWithEnoughFunds_Expect_RequestToSucceed() {
 			// ** Arrange
 
@@ -671,7 +726,7 @@
 
 		[Fact()]
 		[Trait("Class", nameof(Account))]
-		[Trait("Method", nameof(Account.WithdrawCash))]
+		[Trait("Method", nameof(Account.TransferCash))]
 		public void When_CashIsTransferredFromAccountThatDoesNotHaveEnoughFunds_Expect_RequestToFail() {
 			// ** Arrange
 
@@ -706,7 +761,7 @@
 
 		[Fact()]
 		[Trait("Class", nameof(Account))]
-		[Trait("Method", nameof(Account.WithdrawCash))]
+		[Trait("Method", nameof(Account.TransferCash))]
 		public void When_CashIsTransferredFromAccountThatHasEnoughFundsButAmountIsMoreThanDailyLimit_Expect_RequestToFail() {
 			// ** Arrange
 
@@ -745,7 +800,7 @@
 
 		[Fact()]
 		[Trait("Class", nameof(Account))]
-		[Trait("Method", nameof(Account.WithdrawCash))]
+		[Trait("Method", nameof(Account.TransferCash))]
 		public void When_CashIsTransferredFromAccountThatHasEnoughFundsButMultipleTransfersOnSameDayExceedDailyLimit_Expect_RequestToFail() {
 			// ** Arrange
 
@@ -786,7 +841,7 @@
 
 		[Fact()]
 		[Trait("Class", nameof(Account))]
-		[Trait("Method", nameof(Account.WithdrawCash))]
+		[Trait("Method", nameof(Account.TransferCash))]
 		public void When_CashIsTransferredFromAccountThatHasEnoughFundsAndMultipleTransfersButTransfersWereOnAnotherDay_Expect_RequestToSucceed() {
 			// ** Arrange
 
@@ -810,6 +865,48 @@
 
 			var expectedEvents = new IEvent<Guid>[] {
 				new AccountCashTransferred(_dataFixture.DefaultAccountId, transfer, now)
+			};
+
+			// ** Act
+
+			account.TransferCash(transfer);
+
+			// ** Assert
+
+			account.GetUncommittedEvents().Should()
+				.BeEquivalentTo(expectedEvents, options =>
+					options
+						.RespectingRuntimeTypes()
+						.Excluding(x => x.Id)
+						.Using<Instant>(ctx => ctx.Subject.Should().BeCloseTo(ctx.Expectation, Duration.FromMilliseconds(250))).WhenTypeIs<Instant>()
+				);
+		}
+
+
+		[Fact()]
+		[Trait("Class", nameof(Account))]
+		[Trait("Method", nameof(Account.TransferCash))]
+		public void When_CashIsTransferredFromBlockedAccount_Expect_RequestToFail() {
+			// ** Arrange
+
+			var checkDepositedOn = SystemClock.Instance.GetCurrentInstant().Minus(Duration.FromDays(3));
+
+			var depositAmount = 75m;
+
+			var reviveEvents = new IEvent<Guid>[] {
+				new AccountCreated(_dataFixture.DefaultAccountId, _dataFixture.DefaultCustomerName, _dataFixture.DefaultCurrency),
+				new AccountCashDeposited(_dataFixture.DefaultAccountId, new Money(depositAmount, _dataFixture.DefaultCurrency), SystemClock.Instance.GetCurrentInstant()),
+				// Trigger blocking
+				new AccountCashWithdrawalRejected(_dataFixture.DefaultAccountId, new Money(depositAmount + 25m, _dataFixture.DefaultCurrency), SystemClock.Instance.GetCurrentInstant())
+			};
+
+			var account = new Account(reviveEvents);
+			account.ClearUncommittedEvents();
+
+			var transfer = new Money(depositAmount - 25m, _dataFixture.DefaultCurrency);
+
+			var expectedEvents = new IEvent<Guid>[] {
+				new AccountCashTransferRejected(_dataFixture.DefaultAccountId, transfer, SystemClock.Instance.GetCurrentInstant(), "Account is currently blocked from any debits.")
 			};
 
 			// ** Act
