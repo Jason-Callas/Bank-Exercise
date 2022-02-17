@@ -13,7 +13,7 @@ namespace Bank.Shared.Events {
 	public class AccountTransaction :
 		EventBase<Guid> {
 
-		public AccountTransaction(Guid accountId, Instant when) : base(aggregateId: accountId) {
+		public AccountTransaction(Guid aggregateId, Instant when) : base(aggregateId) {
 			When = when;
 		}
 

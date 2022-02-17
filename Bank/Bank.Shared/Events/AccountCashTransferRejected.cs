@@ -7,7 +7,7 @@
 	public class AccountCashTransferRejected :
 		AccountTransaction {
 
-		public AccountCashTransferRejected(Guid accountId, Money amount, Instant when, string? reason = null) : base(accountId, when) {
+		public AccountCashTransferRejected(Guid aggregateId, Money amount, Instant when, string? reason = null) : base(aggregateId, when) {
 			Amount = Guard.Against.Null(amount);
 			Reason = reason;
 		}

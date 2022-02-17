@@ -7,7 +7,7 @@
 	public class AccountCashTransferred :
 		AccountTransaction {
 
-		public AccountCashTransferred(Guid accountId, Money amount, Instant when) : base(accountId, when) {
+		public AccountCashTransferred(Guid aggregateId, Money amount, Instant when) : base(aggregateId, when) {
 			Amount = Guard.Against.Null(amount);
 		}
 
