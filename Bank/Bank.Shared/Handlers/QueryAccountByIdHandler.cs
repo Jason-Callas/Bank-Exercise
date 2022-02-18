@@ -5,21 +5,21 @@
 	using Ardalis.GuardClauses;
 	using Bank.Shared.Domain.Entities;
 	using Bank.Shared.Queries;
-	using Bank.Shared.Repositories;
+	using Linedata.Foundation.Domain.EventSourcing;
 
 	public class QueryAccountByIdHandler :
 		IQueryHandler<GetAccountById, Account> {
 
-		private readonly IAccountRepository _accountRepo;
+		private readonly IEventSourcedRepository<Account> _accountRepo;
 
-		public QueryAccountByIdHandler(IAccountRepository accountRepo) {
+		public QueryAccountByIdHandler(IEventSourcedRepository<Account> accountRepo) {
 			_accountRepo = Guard.Against.Null(accountRepo);
 		}
 
 		public async Task<Account> Handle(GetAccountById request, CancellationToken cancellationToken) {
 			Guard.Against.Null(request);
 
-			return await _accountRepo.GetByIdAsync(request.Id);
+			return await _accountRepo.FindAsync(request.Id);
 		}
 
 	}

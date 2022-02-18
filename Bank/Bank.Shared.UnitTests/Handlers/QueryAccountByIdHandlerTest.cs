@@ -6,9 +6,10 @@
 	using Bank.Shared.Domain.Entities;
 	using Bank.Shared.Handlers;
 	using Bank.Shared.Queries;
-	using Bank.Shared.Repositories;
 	using Bank.Shared.UnitTests.Fixtures;
 	using FluentAssertions;
+	using Linedata.Foundation.Domain;
+	using Linedata.Foundation.Domain.EventSourcing;
 	using Moq;
 	using Xunit;
 
@@ -29,7 +30,7 @@
 		public async Task When_NullCommandIsPassedToHandler_Expect_ExceptionToBeThrown() {
 			// ** Arrange
 
-			var mockRepository = new Mock<IAccountRepository>();
+			var mockRepository = new Mock<IEventSourcedRepository<Account>>();
 
 			var handler = new QueryAccountByIdHandler(mockRepository.Object);
 
@@ -51,11 +52,11 @@
 
 			var query = new GetAccountById(Guid.NewGuid());
 
-			var mockRepository = new Mock<IAccountRepository>();
+			var mockRepository = new Mock<IEventSourcedRepository<Account>>();
 
 			var getByIdWasCalled = false;
-			mockRepository.Setup(x => x.GetByIdAsync(It.IsAny<Guid>()))
-				.Callback<Guid>(x => getByIdWasCalled = true);
+			mockRepository.Setup(x => x.FindAsync(It.IsAny<Identity>(), null))
+				.Callback<Identity, Func<Metadata, Task>?>((i, m) => getByIdWasCalled = true);
 
 			var handler = new QueryAccountByIdHandler(mockRepository.Object);
 
@@ -80,11 +81,11 @@
 
 			var expectedAccount = _dataFixture.GetNewAccount();
 
-			var query = new GetAccountById(expectedAccount.Id);
+			var query = new GetAccountById(Guid.Parse(expectedAccount.Id.ToString()));
 
-			var mockRepository = new Mock<IAccountRepository>();
+			var mockRepository = new Mock<IEventSourcedRepository<Account>>();
 
-			mockRepository.Setup(x => x.GetByIdAsync(It.IsAny<Guid>()))
+			mockRepository.Setup(x => x.FindAsync(It.IsAny<Identity>(), null))
 				.ReturnsAsync(expectedAccount);
 
 			var handler = new QueryAccountByIdHandler(mockRepository.Object);

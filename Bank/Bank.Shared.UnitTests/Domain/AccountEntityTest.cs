@@ -40,7 +40,7 @@
 
 			// ** Assert
 
-			account.GetUncommittedEvents().Should()
+			account.PendingEvents.Should()
 				.BeEquivalentTo(expectedEvents, options =>
 					options
 						.RespectingRuntimeTypes()
@@ -74,7 +74,7 @@
 			// ** Arrange
 
 			var account = new Account(_dataFixture.DefaultAccountId, _dataFixture.DefaultCustomerName, _dataFixture.DefaultCurrency);
-			account.ClearUncommittedEvents();
+			account.TakeEvents();
 
 			var newLimit = new Money(300m, _dataFixture.DefaultCurrency);
 
@@ -88,7 +88,7 @@
 
 			// ** Assert
 
-			account.GetUncommittedEvents().Should()
+			account.PendingEvents.Should()
 				.BeEquivalentTo(expectedEvents, options =>
 					options
 						.RespectingRuntimeTypes()
@@ -103,7 +103,7 @@
 			// ** Arrange
 
 			var account = new Account(_dataFixture.DefaultAccountId, _dataFixture.DefaultCustomerName, _dataFixture.DefaultCurrency);
-			account.ClearUncommittedEvents();
+			account.TakeEvents();
 
 			var newLimit = new Money(0m, _dataFixture.DefaultCurrency);
 
@@ -117,7 +117,7 @@
 
 			// ** Assert
 
-			account.GetUncommittedEvents().Should()
+			account.PendingEvents.Should()
 				.BeEquivalentTo(expectedEvents, options =>
 					options
 						.RespectingRuntimeTypes()
@@ -132,7 +132,7 @@
 			// ** Arrange
 
 			var account = new Account(_dataFixture.DefaultAccountId, _dataFixture.DefaultCustomerName, _dataFixture.DefaultCurrency);
-			account.ClearUncommittedEvents();
+			account.TakeEvents();
 
 			var newLimit = new Money(-250m, _dataFixture.DefaultCurrency);        // negative value not allowed
 
@@ -153,7 +153,7 @@
 			// ** Arrange
 
 			var account = new Account(_dataFixture.DefaultAccountId, _dataFixture.DefaultCustomerName, _dataFixture.DefaultCurrency);
-			account.ClearUncommittedEvents();
+			account.TakeEvents();
 
 			var newLimit = new Money(200m, "USD");        // Account is set to GSB
 
@@ -176,7 +176,7 @@
 			// ** Arrange
 
 			var account = new Account(_dataFixture.DefaultAccountId, _dataFixture.DefaultCustomerName, _dataFixture.DefaultCurrency);
-			account.ClearUncommittedEvents();
+			account.TakeEvents();
 
 			var newLimit = new Money(300m, _dataFixture.DefaultCurrency);
 
@@ -190,7 +190,7 @@
 
 			// ** Assert
 
-			account.GetUncommittedEvents().Should()
+			account.PendingEvents.Should()
 				.BeEquivalentTo(expectedEvents, options =>
 					options
 						.RespectingRuntimeTypes()
@@ -205,7 +205,7 @@
 			// ** Arrange
 
 			var account = new Account(_dataFixture.DefaultAccountId, _dataFixture.DefaultCustomerName, _dataFixture.DefaultCurrency);
-			account.ClearUncommittedEvents();
+			account.TakeEvents();
 
 			var newLimit = new Money(0m, _dataFixture.DefaultCurrency);
 
@@ -219,7 +219,7 @@
 
 			// ** Assert
 
-			account.GetUncommittedEvents().Should()
+			account.PendingEvents.Should()
 				.BeEquivalentTo(expectedEvents, options =>
 					options
 						.RespectingRuntimeTypes()
@@ -234,7 +234,7 @@
 			// ** Arrange
 
 			var account = new Account(_dataFixture.DefaultAccountId, _dataFixture.DefaultCustomerName, _dataFixture.DefaultCurrency);
-			account.ClearUncommittedEvents();
+			account.TakeEvents();
 
 			var newLimit = new Money(-250m, _dataFixture.DefaultCurrency);        // negative value not allowed
 
@@ -255,7 +255,7 @@
 			// ** Arrange
 
 			var account = new Account(_dataFixture.DefaultAccountId, _dataFixture.DefaultCustomerName, _dataFixture.DefaultCurrency);
-			account.ClearUncommittedEvents();
+			account.TakeEvents();
 
 			var newLimit = new Money(200m, "USD");        // Account is set to GSB
 
@@ -278,7 +278,7 @@
 			// ** Arrange
 
 			var account = new Account(_dataFixture.DefaultAccountId, _dataFixture.DefaultCustomerName, _dataFixture.DefaultCurrency);
-			account.ClearUncommittedEvents();
+			account.TakeEvents();
 
 			var deposit = new Money(1000m, _dataFixture.DefaultCurrency);
 
@@ -292,7 +292,7 @@
 
 			// ** Assert
 
-			account.GetUncommittedEvents().Should()
+			account.PendingEvents.Should()
 				.BeEquivalentTo(expectedEvents, options =>
 					options
 						.RespectingRuntimeTypes()
@@ -308,7 +308,7 @@
 			// ** Arrange
 
 			var account = new Account(_dataFixture.DefaultAccountId, _dataFixture.DefaultCustomerName, _dataFixture.DefaultCurrency);
-			account.ClearUncommittedEvents();
+			account.TakeEvents();
 
 			var deposit1 = new Money(1000m, _dataFixture.DefaultCurrency);
 			var deposit2 = new Money(500m, _dataFixture.DefaultCurrency);
@@ -325,7 +325,7 @@
 
 			// ** Assert
 
-			account.GetUncommittedEvents().Should()
+			account.PendingEvents.Should()
 				.BeEquivalentTo(expectedEvents, options =>
 					options
 						.RespectingRuntimeTypes()
@@ -341,7 +341,7 @@
 			// ** Arrange
 
 			var account = new Account(_dataFixture.DefaultAccountId, _dataFixture.DefaultCustomerName, _dataFixture.DefaultCurrency);
-			account.ClearUncommittedEvents();
+			account.TakeEvents();
 
 			var deposit = new Money(275m, "USD");        // Account is set to GSB
 
@@ -364,7 +364,7 @@
 			// ** Arrange
 
 			var account = new Account(_dataFixture.DefaultAccountId, _dataFixture.DefaultCustomerName, _dataFixture.DefaultCurrency);
-			account.ClearUncommittedEvents();
+			account.TakeEvents();
 
 			var deposit = new Money(1000m, _dataFixture.DefaultCurrency);
 
@@ -378,7 +378,7 @@
 
 			// ** Assert
 
-			account.GetUncommittedEvents().Should()
+			account.PendingEvents.Should()
 				.BeEquivalentTo(expectedEvents, options =>
 					options
 						.RespectingRuntimeTypes()
@@ -395,7 +395,7 @@
 			// ** Arrange
 
 			var account = new Account(_dataFixture.DefaultAccountId, _dataFixture.DefaultCustomerName, _dataFixture.DefaultCurrency);
-			account.ClearUncommittedEvents();
+			account.TakeEvents();
 
 			var deposit1 = new Money(1000m, _dataFixture.DefaultCurrency);
 			var deposit2 = new Money(500m, _dataFixture.DefaultCurrency);
@@ -412,7 +412,7 @@
 
 			// ** Assert
 
-			account.GetUncommittedEvents().Should()
+			account.PendingEvents.Should()
 				.BeEquivalentTo(expectedEvents, options =>
 					options
 						.RespectingRuntimeTypes()
@@ -429,7 +429,7 @@
 			// ** Arrange
 
 			var account = new Account(_dataFixture.DefaultAccountId, _dataFixture.DefaultCustomerName, _dataFixture.DefaultCurrency);
-			account.ClearUncommittedEvents();
+			account.TakeEvents();
 
 			var deposit = new Money(275m, "USD");        // Account is set to GSB
 
@@ -453,7 +453,7 @@
 
 			var account = new Account(_dataFixture.DefaultAccountId, _dataFixture.DefaultCustomerName, _dataFixture.DefaultCurrency);
 			account.SetOverdraftLimit(new Money(0m, _dataFixture.DefaultCurrency));
-			account.ClearUncommittedEvents();
+			account.TakeEvents();
 
 			var withdrawal = new Money(100m, _dataFixture.DefaultCurrency);
 
@@ -467,7 +467,7 @@
 
 			// ** Assert
 
-			account.GetUncommittedEvents().Should()
+			account.PendingEvents.Should()
 				.BeEquivalentTo(expectedEvents, options =>
 					options
 						.RespectingRuntimeTypes()
@@ -485,7 +485,7 @@
 			var account = new Account(_dataFixture.DefaultAccountId, _dataFixture.DefaultCustomerName, _dataFixture.DefaultCurrency);
 			account.DepositCash(new Money(200m, _dataFixture.DefaultCurrency));
 			account.SetOverdraftLimit(new Money(0m, _dataFixture.DefaultCurrency));
-			account.ClearUncommittedEvents();
+			account.TakeEvents();
 
 			var withdrawal = new Money(100m, _dataFixture.DefaultCurrency);
 
@@ -499,7 +499,7 @@
 
 			// ** Assert
 
-			account.GetUncommittedEvents().Should()
+			account.PendingEvents.Should()
 				.BeEquivalentTo(expectedEvents, options =>
 					options
 						.RespectingRuntimeTypes()
@@ -517,7 +517,7 @@
 			var account = new Account(_dataFixture.DefaultAccountId, _dataFixture.DefaultCustomerName, _dataFixture.DefaultCurrency);
 			account.DepositCash(new Money(75m, _dataFixture.DefaultCurrency));
 			account.SetOverdraftLimit(new Money(100m, _dataFixture.DefaultCurrency));
-			account.ClearUncommittedEvents();
+			account.TakeEvents();
 
 			var withdrawal = new Money(100m, _dataFixture.DefaultCurrency);
 
@@ -531,9 +531,7 @@
 
 			// ** Assert
 
-			var x = account.GetUncommittedEvents();
-
-			account.GetUncommittedEvents().Should()
+			account.PendingEvents.Should()
 				.BeEquivalentTo(expectedEvents, options =>
 					options
 						.RespectingRuntimeTypes()
@@ -551,7 +549,7 @@
 			var account = new Account(_dataFixture.DefaultAccountId, _dataFixture.DefaultCustomerName, _dataFixture.DefaultCurrency);
 			account.DepositCash(new Money(25m, _dataFixture.DefaultCurrency));
 			account.SetOverdraftLimit(new Money(50m, _dataFixture.DefaultCurrency));
-			account.ClearUncommittedEvents();
+			account.TakeEvents();
 
 			var withdrawal = new Money(100m, _dataFixture.DefaultCurrency);
 
@@ -565,7 +563,7 @@
 
 			// ** Assert
 
-			account.GetUncommittedEvents().Should()
+			account.PendingEvents.Should()
 				.BeEquivalentTo(expectedEvents, options =>
 					options
 						.RespectingRuntimeTypes()
@@ -584,7 +582,7 @@
 			account.SetOverdraftLimit(new Money(0m, _dataFixture.DefaultCurrency));
 			account.DepositCash(new Money(75m, _dataFixture.DefaultCurrency));
 			account.DepositCheck(new Money(75m, _dataFixture.DefaultCurrency));
-			account.ClearUncommittedEvents();
+			account.TakeEvents();
 
 			var withdrawal = new Money(100m, _dataFixture.DefaultCurrency);
 
@@ -598,7 +596,7 @@
 
 			// ** Assert
 
-			account.GetUncommittedEvents().Should()
+			account.PendingEvents.Should()
 				.BeEquivalentTo(expectedEvents, options =>
 					options
 						.RespectingRuntimeTypes()
@@ -622,7 +620,7 @@
 			};
 
 			var account = new Account(reviveEvents);
-			account.ClearUncommittedEvents();
+			account.TakeEvents();
 
 			var withdrawal = new Money(100m, _dataFixture.DefaultCurrency);
 
@@ -636,7 +634,7 @@
 
 			// ** Assert
 
-			account.GetUncommittedEvents().Should()
+			account.PendingEvents.Should()
 				.BeEquivalentTo(expectedEvents, options =>
 					options
 						.RespectingRuntimeTypes()
@@ -663,7 +661,7 @@
 			};
 
 			var account = new Account(reviveEvents);
-			account.ClearUncommittedEvents();
+			account.TakeEvents();
 
 			var withdrawal = new Money(depositAmount - 25m, _dataFixture.DefaultCurrency);
 
@@ -677,7 +675,7 @@
 
 			// ** Assert
 
-			account.GetUncommittedEvents().Should()
+			account.PendingEvents.Should()
 				.BeEquivalentTo(expectedEvents, options =>
 					options
 						.RespectingRuntimeTypes()
@@ -701,7 +699,7 @@
 			};
 
 			var account = new Account(reviveEvents);
-			account.ClearUncommittedEvents();
+			account.TakeEvents();
 
 			var transfer = new Money(75m, _dataFixture.DefaultCurrency);
 
@@ -715,7 +713,7 @@
 
 			// ** Assert
 
-			account.GetUncommittedEvents().Should()
+			account.PendingEvents.Should()
 				.BeEquivalentTo(expectedEvents, options =>
 					options
 						.RespectingRuntimeTypes()
@@ -736,7 +734,6 @@
 			};
 
 			var account = new Account(reviveEvents);
-			account.ClearUncommittedEvents();
 
 			var transfer = new Money(75m, _dataFixture.DefaultCurrency);
 
@@ -750,7 +747,7 @@
 
 			// ** Assert
 
-			account.GetUncommittedEvents().Should()
+			account.PendingEvents.Should()
 				.BeEquivalentTo(expectedEvents, options =>
 					options
 						.RespectingRuntimeTypes()
@@ -774,7 +771,7 @@
 			};
 
 			var account = new Account(reviveEvents);
-			account.ClearUncommittedEvents();
+			account.TakeEvents();
 
 			// Make sure the request is more than limit
 			var transfer = new Money(dailyLimit.Amount + 75m, dailyLimit.Currency);
@@ -789,7 +786,7 @@
 
 			// ** Assert
 
-			account.GetUncommittedEvents().Should()
+			account.PendingEvents.Should()
 				.BeEquivalentTo(expectedEvents, options =>
 					options
 						.RespectingRuntimeTypes()
@@ -814,7 +811,7 @@
 			};
 
 			var account = new Account(reviveEvents);
-			account.ClearUncommittedEvents();
+			account.TakeEvents();
 
 			// 50 (first request) + 75 (this request) > 100 (limit)
 			var transfer = new Money(75m, dailyLimit.Currency);
@@ -829,7 +826,7 @@
 
 			// ** Assert
 
-			account.GetUncommittedEvents().Should()
+			account.PendingEvents.Should()
 				.BeEquivalentTo(expectedEvents, options =>
 					options
 						.RespectingRuntimeTypes()
@@ -858,7 +855,7 @@
 			};
 
 			var account = new Account(reviveEvents);
-			account.ClearUncommittedEvents();
+			account.TakeEvents();
 
 			// 50 (first request) + 75 (this request) > 100 (limit)
 			var transfer = new Money(75m, dailyLimit.Currency);
@@ -873,7 +870,7 @@
 
 			// ** Assert
 
-			account.GetUncommittedEvents().Should()
+			account.PendingEvents.Should()
 				.BeEquivalentTo(expectedEvents, options =>
 					options
 						.RespectingRuntimeTypes()
@@ -901,7 +898,7 @@
 			};
 
 			var account = new Account(reviveEvents);
-			account.ClearUncommittedEvents();
+			account.TakeEvents();
 
 			var transfer = new Money(depositAmount - 25m, _dataFixture.DefaultCurrency);
 
@@ -915,7 +912,7 @@
 
 			// ** Assert
 
-			account.GetUncommittedEvents().Should()
+			account.PendingEvents.Should()
 				.BeEquivalentTo(expectedEvents, options =>
 					options
 						.RespectingRuntimeTypes()

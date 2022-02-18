@@ -4,12 +4,26 @@
 	using Bank.Shared.Domain.ValueObjects;
 	using Bank.Shared.Events;
 	using Bank.Shared.Exceptions;
+	using Linedata.Foundation.Domain;
+	using Linedata.Foundation.Domain.EventSourcing;
 	using NodaTime;
 
 	public class Account :
-		AggregateBase<Guid>, IAggregateRoot{
+		Aggregate {
 
-		public Account(Guid id, string name, string currency) : base() {
+		public Account() {
+			Register<AccountCreated>(Apply);
+			Register<AccountOverdraftLimitChanged>(Apply);
+			Register<AccountDailyWireTransferLimitChanged>(Apply);
+			Register<AccountCashDeposited>(Apply);
+			Register<AccountCheckDeposited>(Apply);
+			Register<AccountCashWithdrawn>(Apply);
+			Register<AccountCashTransferred>(Apply);
+			Register<AccountCashWithdrawalRejected>(Apply);
+			Register<AccountCashTransferRejected>(Apply);
+		}
+
+		public Account(Guid id, string name, string currency) : this() {
 			// Need to research this more. Some "guard" libraries support checking string length but others (this one for example, put length check in
 			// the realm of validation which _seems_ to NOT be the same as "guard" checks...
 
@@ -28,12 +42,13 @@
 				throw new ArgumentException(nameof(currency), "The length of the value must be 3 characters.");
 			}
 
-			RaiseEvent(new AccountCreated(id, name, currency));
+			Raise(new AccountCreated(id, name, currency));
 		}
 
-		// Really, really hate the idea of exposing this ctor simply for purposes of unit testing or _maybe_ reconstituting entuty
+		// Really, really hate the idea of exposing this ctor simply for purposes of unit testing or _maybe_ reconstituting entity
 		// from store. There HAS to be a "cleaner" way...
-		public Account(IEnumerable<IEvent<Guid>> events) : base(events) {
+		public Account(IEnumerable<IEvent<Guid>> events) : this() {
+			((IEventSourced)this).RestoreFromEvents(events);
 		}
 
 		internal void Apply(AccountCreated @event) {
@@ -224,7 +239,7 @@
 
 			ValidateCurrencyOrThrow(limit, "Overdraft Limit");
 
-			RaiseEvent(new AccountOverdraftLimitChanged(Id, limit));
+			Raise(new AccountOverdraftLimitChanged(Guid.Parse(Id.ToString()), limit));
 		}
 
 		public void SetDailyWireTransferLimit(Money limit) {
@@ -235,7 +250,8 @@
 
 			ValidateCurrencyOrThrow(limit, "Daily Wire Transfer Limit");
 
-			RaiseEvent(new AccountDailyWireTransferLimitChanged(Id, limit));
+			var x = Identity.NewId();
+			Raise(new AccountDailyWireTransferLimitChanged(Guid.Parse(Id.ToString()), limit));
 		}
 
 		public void DepositCash(Money amount) {
@@ -246,7 +262,7 @@
 
 			ValidateCurrencyOrThrow(amount, "Cash Deposit");
 
-			RaiseEvent(new AccountCashDeposited(Id, amount, SystemClock.Instance.GetCurrentInstant()));
+			Raise(new AccountCashDeposited(Guid.Parse(Id.ToString()), amount, SystemClock.Instance.GetCurrentInstant()));
 		}
 
 		public void DepositCheck(Money amount) {
@@ -257,7 +273,7 @@
 
 			ValidateCurrencyOrThrow(amount, "Check Deposit");
 
-			RaiseEvent(new AccountCheckDeposited(Id, amount, SystemClock.Instance.GetCurrentInstant()));
+			Raise(new AccountCheckDeposited(Guid.Parse(Id.ToString()), amount, SystemClock.Instance.GetCurrentInstant()));
 		}
 
 		public void WithdrawCash(Money amount) {
@@ -273,7 +289,7 @@
 
 			if (approval == DebitApproval.Approved) {
 				// ** Let withdrawal happen
-				RaiseEvent(new AccountCashWithdrawn(Id, amount, now));
+				Raise(new AccountCashWithdrawn(Guid.Parse(Id.ToString()), amount, now));
 			}
 			else {
 				// ** Do NOT let withdrawal happen
@@ -292,7 +308,7 @@
 						break;
 				}
 
-				RaiseEvent(new AccountCashWithdrawalRejected(Id, amount, now, reason));
+				Raise(new AccountCashWithdrawalRejected(Guid.Parse(Id.ToString()), amount, now, reason));
 
 				// ** An argument can be made that there should **also* be an event to "block" the account. However, that _could_
 				// ** imply that there _then_ needs to be an event that "unblocks" it. While that is easy to do if a **cash** deposit
@@ -316,7 +332,7 @@
 
 			if (approval == DebitApproval.Approved) {
 				// ** Let transfer happen
-				RaiseEvent(new AccountCashTransferred(Id, amount, now));
+				Raise(new AccountCashTransferred(Guid.Parse(Id.ToString()), amount, now));
 			}
 			else {
 				// ** Do NOT let transfer happen
@@ -338,7 +354,7 @@
 						break;
 				}
 
-				RaiseEvent(new AccountCashTransferRejected(Id, amount, now, reason));
+				Raise(new AccountCashTransferRejected(Guid.Parse(Id.ToString()), amount, now, reason));
 			}
 		}
 

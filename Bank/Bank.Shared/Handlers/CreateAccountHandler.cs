@@ -3,15 +3,15 @@
 	using Ardalis.GuardClauses;
 	using Bank.Shared.Commands;
 	using Bank.Shared.Domain.Entities;
-	using Bank.Shared.Repositories;
+	using Linedata.Foundation.Domain.EventSourcing;
 	using MediatR;
 
 	public class CreateAccountHandler :
 		ICommandHandler<CreateAccount> {
 
-		private readonly IAccountRepository _accountRepo;
+		private readonly IEventSourcedRepository<Account> _accountRepo;
 
-		public CreateAccountHandler(IAccountRepository accountRepo) {
+		public CreateAccountHandler(IEventSourcedRepository<Account> accountRepo) {
 			_accountRepo = Guard.Against.Null(accountRepo);
 		}
 
@@ -20,9 +20,7 @@
 
 			var newAccount = new Account(request.Id, request.Name, request.Currency);
 
-			// The use of Repository pattern may change after Event Source work is done. However, it is possible that
-			// Repo will still stay in play with the implementation hiding the use of events.
-			await _accountRepo.CreateAsync(newAccount);
+			await _accountRepo.SaveAsync(newAccount);
 
 			return Unit.Value;
 		}

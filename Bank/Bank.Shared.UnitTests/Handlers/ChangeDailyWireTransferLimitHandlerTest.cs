@@ -8,9 +8,10 @@
 	using Bank.Shared.Domain.ValueObjects;
 	using Bank.Shared.Exceptions;
 	using Bank.Shared.Handlers;
-	using Bank.Shared.Repositories;
 	using Bank.Shared.UnitTests.Fixtures;
 	using FluentAssertions;
+	using Linedata.Foundation.Domain;
+	using Linedata.Foundation.Domain.EventSourcing;
 	using Moq;
 	using Xunit;
 
@@ -31,7 +32,7 @@
 		public async Task When_NullCommandIsPassedToHandler_Expect_ExceptionToBeThrown() {
 			// ** Arrange
 
-			var mockRepository = new Mock<IAccountRepository>();
+			var mockRepository = new Mock<IEventSourcedRepository<Account>>();
 
 			var handler = new ChangeDailyWireTransferLimitHandler(mockRepository.Object);
 
@@ -56,7 +57,7 @@
 				Amount = 200m
 			};
 
-			var mockRepository = new Mock<IAccountRepository>();
+			var mockRepository = new Mock<IEventSourcedRepository<Account>>();
 
 			var handler = new ChangeDailyWireTransferLimitHandler(mockRepository.Object);
 
@@ -86,14 +87,14 @@
 				Currency = expectedLimit.Currency
 			};
 
-			var mockRepository = new Mock<IAccountRepository>();
+			var mockRepository = new Mock<IEventSourcedRepository<Account>>();
 
-			mockRepository.Setup(x => x.GetByIdAsync(It.IsAny<Guid>()))
+			mockRepository.Setup(x => x.FindAsync(It.IsAny<Identity>(), null))
 				.ReturnsAsync(expectedAccount);
 
 			var updateWasCalled = false;
-			mockRepository.Setup(x => x.UpdateAsync(It.IsAny<Account>()))
-				.Callback<Account>(x => updateWasCalled = true);
+			mockRepository.Setup(x => x.SaveAsync(It.IsAny<Account>(), null))
+				.Callback<Account, Metadata?>((a, m) => updateWasCalled = true);
 
 			var handler = new ChangeDailyWireTransferLimitHandler(mockRepository.Object);
 

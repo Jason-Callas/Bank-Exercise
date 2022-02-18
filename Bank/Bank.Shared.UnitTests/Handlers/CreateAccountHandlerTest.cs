@@ -6,9 +6,10 @@
 	using Bank.Shared.Commands;
 	using Bank.Shared.Domain.Entities;
 	using Bank.Shared.Handlers;
-	using Bank.Shared.Repositories;
 	using Bank.Shared.UnitTests.Fixtures;
 	using FluentAssertions;
+	using Linedata.Foundation.Domain;
+	using Linedata.Foundation.Domain.EventSourcing;
 	using Moq;
 	using Xunit;
 
@@ -29,7 +30,7 @@
 		public async Task When_NullCommandIsPassedToHandler_Expect_ExceptionToBeThrown() {
 			// ** Arrange
 
-			var mockRepository = new Mock<IAccountRepository>();
+			var mockRepository = new Mock<IEventSourcedRepository<Account>>();
 
 			var handler = new CreateAccountHandler(mockRepository.Object);
 
@@ -54,11 +55,11 @@
 				Currency = _dataFixture.DefaultCurrency
 			};
 
-			var mockRepository = new Mock<IAccountRepository>();
+			var mockRepository = new Mock<IEventSourcedRepository<Account>>();
 
 			var createWasCalled = false;
-			mockRepository.Setup(x => x.CreateAsync(It.IsAny<Account>()))
-				.Callback<Account>(x => createWasCalled = true);
+			mockRepository.Setup(x => x.SaveAsync(It.IsAny<Account>(), null))
+				.Callback<Account, Metadata?>((a, m) => createWasCalled = true);
 
 			var handler = new CreateAccountHandler(mockRepository.Object);
 
