@@ -1,14 +1,12 @@
-﻿
-using System;
-using System.Threading.Tasks;
-using Bank.Shared.Domain.Entities;
-using Bank.Shared.Domain.ValueObjects;
-using Bank.Shared.IntegrationTests.Fixtures;
-using Bank.Shared.Repositories;
-using FluentAssertions;
-using Xunit;
+﻿namespace Bank.Shared.IntegrationTests.Repositories {
 
-namespace Bank.Shared.IntegrationTests.Repositories {
+	using System.Threading.Tasks;
+	using Bank.Shared.Domain.Entities;
+	using Bank.Shared.Domain.ValueObjects;
+	using Bank.Shared.IntegrationTests.Fixtures;
+	using FluentAssertions;
+	using Xunit;
+
 	public class AcountRepositoryTest :
 		IClassFixture<EventStoreFixture>,
 		IClassFixture<AccountDataFixture> {
@@ -26,18 +24,17 @@ namespace Bank.Shared.IntegrationTests.Repositories {
 		public async Task When_NewAccountIsWrittenToStore_Expect_DataToBePersisted() {
 			// ** Arrange
 
-			var client = _eventStoreFixture.GetClient();
-
-			var repo = new AccountRepository(client);
+			var factory = _eventStoreFixture.GetRepositoryFactory();
+			var repo = factory.GetRepository<Account>();
 
 			var account = new Account(_dataFixture.DefaultAccountId, _dataFixture.DefaultCustomerName, _dataFixture.DefaultCurrency);
 
 			// Reset
-			await repo.DeleteAsync(account.Id);
+			//await repo.DeleteAsync(account.Id);
 
 			// ** Act
 
-			await repo.CreateAsync(account);
+			await repo.SaveAsync(account);
 
 			// ** Assert
 		}
@@ -46,17 +43,16 @@ namespace Bank.Shared.IntegrationTests.Repositories {
 		public async Task When_ExistingAccountIsReadFromStore_Expect_AccountToBeReturned() {
 			// ** Arrange
 
-			var client = _eventStoreFixture.GetClient();
-
-			var repo = new AccountRepository(client);
+			var factory = _eventStoreFixture.GetRepositoryFactory();
+			var repo = factory.GetRepository<Account>();
 
 			var expectedAccount = new Account(_dataFixture.DefaultAccountId, _dataFixture.DefaultCustomerName, _dataFixture.DefaultCurrency);
-			await repo.DeleteAsync(expectedAccount.Id);
-			await repo.CreateAsync(expectedAccount);
+			//await repo.DeleteAsync(expectedAccount.Id);
+			await repo.SaveAsync(expectedAccount);
 
 			// ** Act
 
-			var reconstitutedAccount = await repo.GetByIdAsync(_dataFixture.DefaultAccountId);
+			var reconstitutedAccount = await repo.FindAsync(_dataFixture.DefaultAccountId);
 
 			// ** Assert
 
@@ -68,22 +64,21 @@ namespace Bank.Shared.IntegrationTests.Repositories {
 		public async Task When_ExistingAccountWithNewTransactionIsWrittenToStore_Expect_DataToBePersisted() {
 			// ** Arrange
 
-			var client = _eventStoreFixture.GetClient();
-
-			var repo = new AccountRepository(client);
+			var factory = _eventStoreFixture.GetRepositoryFactory();
+			var repo = factory.GetRepository<Account>();
 
 			var expectedAccount = new Account(_dataFixture.DefaultAccountId, _dataFixture.DefaultCustomerName, _dataFixture.DefaultCurrency);
-			await repo.DeleteAsync(expectedAccount.Id);
-			await repo.CreateAsync(expectedAccount);
+			//await repo.DeleteAsync(expectedAccount.Id);
+			await repo.SaveAsync(expectedAccount);
 
-			expectedAccount.ClearUncommittedEvents();
+			expectedAccount.TakeEvents();
 
 			// ** Act
 
 			expectedAccount.DepositCash(new Money(450m, _dataFixture.DefaultCurrency));
-			await repo.UpdateAsync(expectedAccount);
+			await repo.SaveAsync(expectedAccount);
 
-			var reconstitutedAccount = await repo.GetByIdAsync(_dataFixture.DefaultAccountId);
+			var reconstitutedAccount = await repo.FindAsync(_dataFixture.DefaultAccountId);
 
 			// ** Assert
 

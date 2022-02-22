@@ -1,21 +1,45 @@
 ﻿namespace Bank.Shared.IntegrationTests.Fixtures {
-
-	using EventStore.Client;
+	using Bank.Shared.Domain.Entities;
+	using Linedata.Foundation.Domain.EventSourcing;
+	using Linedata.Foundation.EventStorage;
+	using Linedata.Foundation.EventStorage.EventStore;
+	using Microsoft.Extensions.Configuration;
+	using Microsoft.Extensions.DependencyInjection;
 
 	public class EventStoreFixture {
 
-		// We can share client across a given application
-		private static EventStoreClient? s_client = default;
+		private static ServiceProvider GetProvider() {
+			// ** Event Store only works with DI so we are forced to go this route
 
-		public EventStoreClient GetClient() {
-			if (s_client == null) {
-				var settings = EventStoreClientSettings
-					.Create("esdb://127.0.0.1:2113?tls=false&keepAliveTimeout=10000&keepAliveInterval=10000");
+			var services = new ServiceCollection();
 
-				s_client = new EventStoreClient(settings);
-			}
+			var configuration = new ConfigurationBuilder()
+				.AddJsonFile("appsettings.json")
+				.AddJsonFile("appsettings.Development.json", true)
+				.Build();
 
-			return s_client;
+			services.AddEventStorage(configuration);
+			services.AddEventSourcing(builder => {
+				builder.WithPrefixedCamelCaseStreamNames("bank");
+
+				builder.ForAggregate<Account>();
+			});
+
+			return services.BuildServiceProvider();
+		}
+
+		public IEventStoreConnectionFactory GetConnectionFactory() {
+			var provider = GetProvider();
+
+			var x = provider.GetRequiredService<IEventSourcedRepositoryFactory>();
+
+			return provider.GetRequiredService<IEventStoreConnectionFactory>();
+		}
+
+		public IEventSourcedRepositoryFactory GetRepositoryFactory() {
+			var provider = GetProvider();
+
+			return provider.GetRequiredService<IEventSourcedRepositoryFactory>();
 		}
 
 	}
